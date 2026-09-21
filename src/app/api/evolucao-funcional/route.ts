@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { eq, asc, desc, and } from "drizzle-orm";
-import { db } from "@/db";
+import { db, withRetry } from "@/db";
 import { evolucaoFuncional, servidores } from "@/db/schema";
 import { obterSessao } from "@/lib/auth";
 import { addLog } from "@/app/api/logs/route";
@@ -135,11 +135,14 @@ export async function GET(req: NextRequest) {
       
       addLog(`[GET] Análise cargo: ${JSON.stringify(analiseCargo)}`);
 
-      const evs = await db
-        .select()
-        .from(evolucaoFuncional)
-        .where(eq(evolucaoFuncional.servidorId, sid))
-        .orderBy(asc(evolucaoFuncional.numero));
+      // Usando withRetry para evitar problemas de conexão
+      const evs = await withRetry(async () => {
+        return await db
+          .select()
+          .from(evolucaoFuncional)
+          .where(eq(evolucaoFuncional.servidorId, sid))
+          .orderBy(asc(evolucaoFuncional.numero));
+      }, 3, 200);
       
       addLog(`[GET] Evoluções encontradas: ${evs.length}`);
 
@@ -256,7 +259,9 @@ export async function POST(req: NextRequest) {
 
     // Valida servidor
     addLog(`[POST] Buscando servidor ID: ${servidorId}`);
-    const [servidor] = await db.select().from(servidores).where(eq(servidores.id, Number(servidorId))).limit(1);
+    const [servidor] = await withRetry(() =>
+      db.select().from(servidores).where(eq(servidores.id, Number(servidorId))).limit(1)
+    );
     if (!servidor) {
       addLog('[POST] Erro: Servidor não encontrado');
       return NextResponse.json({ error: "Servidor não encontrado" }, { status: 404 });
@@ -296,11 +301,13 @@ export async function POST(req: NextRequest) {
 
     // Verifica duplicata de número
     addLog('[POST] Buscando evoluções existentes...');
-    const existentes = await db
-      .select()
-      .from(evolucaoFuncional)
-      .where(eq(evolucaoFuncional.servidorId, Number(servidorId)))
-      .orderBy(asc(evolucaoFuncional.numero));
+    const existentes = await withRetry(() =>
+      db
+        .select()
+        .from(evolucaoFuncional)
+        .where(eq(evolucaoFuncional.servidorId, Number(servidorId)))
+        .orderBy(asc(evolucaoFuncional.numero))
+    );
 
     const numero = existentes.length + 1;
     const ultima = existentes.length > 0 ? existentes[existentes.length - 1] : null;
@@ -328,42 +335,48 @@ export async function POST(req: NextRequest) {
     // Se esta evolução for marcada como "última", desmarca as outras
     if (ehUltima) {
       addLog('[POST] Desmarcando outras evoluções como última...');
-      await db
-        .update(evolucaoFuncional)
-        .set({ ehUltima: false, proximaData: null })
-        .where(eq(evolucaoFuncional.servidorId, Number(servidorId)));
+      await withRetry(() =>
+        db
+          .update(evolucaoFuncional)
+          .set({ ehUltima: false, proximaData: null })
+          .where(eq(evolucaoFuncional.servidorId, Number(servidorId)))
+      );
     }
 
     addLog('[POST] Inserindo nova evolução...');
-    const [criada] = await db
-      .insert(evolucaoFuncional)
-      .values({
-        servidorId: Number(servidorId),
-        numero,
-        nivelAnterior,
-        nivelPosterior,
-        dataVigencia,
-        dataDoe: dataDoe || null,
-        ehUltima: Boolean(ehUltima),
-        intersticioAnos: regra.intersticioAnos,
-        ultimaEvolucao: ultima?.dataVigencia || null,
-        proximaData,
-        dataCalculada,
-        dataEfetiva: dataEfetiva || null,
-        intervencao: intervencao || null,
-        justificativa: justificativa || null,
-        responsavel: sessao.nome,
-      })
-      .returning();
+    const [criada] = await withRetry(() =>
+      db
+        .insert(evolucaoFuncional)
+        .values({
+          servidorId: Number(servidorId),
+          numero,
+          nivelAnterior,
+          nivelPosterior,
+          dataVigencia,
+          dataDoe: dataDoe || null,
+          ehUltima: Boolean(ehUltima),
+          intersticioAnos: regra.intersticioAnos,
+          ultimaEvolucao: ultima?.dataVigencia || null,
+          proximaData,
+          dataCalculada,
+          dataEfetiva: dataEfetiva || null,
+          intervencao: intervencao || null,
+          justificativa: justificativa || null,
+          responsavel: sessao.nome,
+        })
+        .returning()
+    );
 
     addLog(`[POST] Evolução criada: ${JSON.stringify(criada)}`);
 
     // Atualiza o nível do servidor
     addLog('[POST] Atualizando nível do servidor...');
-    await db
-      .update(servidores)
-      .set({ nivel: nivelPosterior })
-      .where(eq(servidores.id, Number(servidorId)));
+    await withRetry(() =>
+      db
+        .update(servidores)
+        .set({ nivel: nivelPosterior })
+        .where(eq(servidores.id, Number(servidorId)))
+    );
 
     addLog('[POST] Sucesso!');
     return NextResponse.json(criada, { status: 201 });

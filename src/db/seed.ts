@@ -29,12 +29,14 @@ async function hashSenha(senha: string) {
 async function main() {
   console.log("🌱 Executando seed do banco de dados...");
   
-  // Usa DATABASE_URL do ambiente (Supabase Pooler)
-  const databaseUrl = process.env.DATABASE_URL;
-  if (!databaseUrl) throw new Error("DATABASE_URL não configurada");
-  
+  // Cria conexão dedicada para seed usando parâmetros separados
+  // (necessário para Supabase Pooler)
   const pool = new Pool({
-    connectionString: databaseUrl,
+    host: 'aws-0-sa-east-1.pooler.supabase.com',
+    port: 5432,
+    database: 'postgres',
+    user: 'postgres.suuzyqiheohzfigswieo',
+    password: 'JoCa1506Sijklm',
     max: 5,
     connectionTimeoutMillis: 15000,
     ssl: { rejectUnauthorized: false },

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { eq, asc, ilike, or } from "drizzle-orm";
-import { db } from "@/db";
+import { db, withRetry } from "@/db";
 import { servidores, users } from "@/db/schema";
 import { obterSessao, hashSenha } from "@/lib/auth";
 
@@ -93,19 +93,31 @@ export async function PUT(req: NextRequest) {
   const id = url.searchParams.get("id");
   if (!id) return NextResponse.json({ error: "ID obrigatório" }, { status: 400 });
   
-  // Verificar se o servidor existe
-  const [existe] = await db.select().from(servidores).where(eq(servidores.id, Number(id)));
-  if (!existe) {
-    return NextResponse.json({ error: "Servidor não encontrado" }, { status: 404 });
+  try {
+    // Verificar se o servidor existe
+    const [existe] = await withRetry(() => 
+      db.select().from(servidores).where(eq(servidores.id, Number(id)))
+    );
+    if (!existe) {
+      return NextResponse.json({ error: "Servidor não encontrado" }, { status: 404 });
+    }
+    
+    const body = await req.json();
+    const [atualizado] = await withRetry(() =>
+      db
+        .update(servidores)
+        .set({ ...body, atualizadoEm: new Date() })
+        .where(eq(servidores.id, Number(id)))
+        .returning()
+    );
+    return NextResponse.json(atualizado);
+  } catch (error: any) {
+    console.error("[PUT /api/servidores] Erro:", error);
+    return NextResponse.json(
+      { error: `Erro ao atualizar servidor: ${error.message}` },
+      { status: 500 }
+    );
   }
-  
-  const body = await req.json();
-  const [atualizado] = await db
-    .update(servidores)
-    .set({ ...body, atualizadoEm: new Date() })
-    .where(eq(servidores.id, Number(id)))
-    .returning();
-  return NextResponse.json(atualizado);
 }
 
 export async function DELETE(req: NextRequest) {
@@ -117,12 +129,24 @@ export async function DELETE(req: NextRequest) {
   const id = url.searchParams.get("id");
   if (!id) return NextResponse.json({ error: "ID obrigatório" }, { status: 400 });
   
-  // Verificar se o servidor existe
-  const [existe] = await db.select().from(servidores).where(eq(servidores.id, Number(id)));
-  if (!existe) {
-    return NextResponse.json({ error: "Servidor não encontrado" }, { status: 404 });
+  try {
+    // Verificar se o servidor existe
+    const [existe] = await withRetry(() =>
+      db.select().from(servidores).where(eq(servidores.id, Number(id)))
+    );
+    if (!existe) {
+      return NextResponse.json({ error: "Servidor não encontrado" }, { status: 404 });
+    }
+    
+    await withRetry(() =>
+      db.delete(servidores).where(eq(servidores.id, Number(id)))
+    );
+    return NextResponse.json({ ok: true });
+  } catch (error: any) {
+    console.error("[DELETE /api/servidores] Erro:", error);
+    return NextResponse.json(
+      { error: `Erro ao excluir servidor: ${error.message}` },
+      { status: 500 }
+    );
   }
-  
-  await db.delete(servidores).where(eq(servidores.id, Number(id)));
-  return NextResponse.json({ ok: true });
 }
