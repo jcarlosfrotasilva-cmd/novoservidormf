@@ -58,7 +58,7 @@ const Vazio: Partial<Servidor> = {
   unidadeExercicio: "",
   regimeJuridico: "Estatutário",
   cargaHoraria: 40,
-  jornada: "Diurna",
+  jornada: "BÁSICA",
   escolaridade: "",
   dataAdmissao: "",
   dataPosse: "",
@@ -501,7 +501,7 @@ export default function GestorPage() {
                 <Input label="Unidade de Exercício" value={form.unidadeExercicio || ""} onChange={(v) => setForm({ ...form, unidadeExercicio: v })} />
                 <Input label="Regime Jurídico" value={form.regimeJuridico || ""} onChange={(v) => setForm({ ...form, regimeJuridico: v })} />
                 <Input label="Carga Horária (h/semana)" type="number" value={form.cargaHoraria?.toString() || ""} onChange={(v) => setForm({ ...form, cargaHoraria: v ? Number(v) : null })} />
-                <Select label="Jornada" value={form.jornada || ""} onChange={(v) => setForm({ ...form, jornada: v })} opcoes={["Diurna", "Noturna", "Mista"]} />
+                <Select label="Jornada" value={form.jornada || ""} onChange={(v) => setForm({ ...form, jornada: v })} opcoes={["REDUZIDA", "INICIAL", "BÁSICA", "INTEGRAL", "AMPLIADA", "COMPLETA"]} />
                 <Select label="Escolaridade" value={form.escolaridade || ""} onChange={(v) => setForm({ ...form, escolaridade: v })} opcoes={["Ensino Médio", "Ensino Superior", "Especialização", "Mestrado", "Doutorado"]} />
                 <Select label="Situação" value={form.situacao || "Ativo"} onChange={(v) => setForm({ ...form, situacao: v })} opcoes={["Ativo", "Inativo", "Afastado", "Aposentado", "Exonerado"]} />
                 <Input label="Data de Admissão *" type="date" value={form.dataAdmissao || ""} onChange={(v) => setForm({ ...form, dataAdmissao: v })} required />
