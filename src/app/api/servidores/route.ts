@@ -12,6 +12,55 @@ function gerarSenhaPadrao(dataNascimento: string | null): string {
   return `${d}${m}${y}`;
 }
 
+// Normaliza dados do body para evitar erros com datas e campos vazios
+function normalizarDadosServidor(body: any): any {
+  const normalizado: any = {};
+  
+  // Campos que não devem ser atualizados
+  const camposIgnorar = ['id', 'criadoEm', 'atualizadoEm'];
+  
+  // Campos de data que devem ser strings no formato YYYY-MM-DD ou null
+  const camposData = [
+    'dataNascimento', 'dataAdmissao', 'dataPosse', 'dataExercicio',
+    'dtingCtd', 'dtfimCtd'
+  ];
+  
+  for (const [key, value] of Object.entries(body)) {
+    // Ignora campos que não devem ser atualizados
+    if (camposIgnorar.includes(key)) continue;
+    
+    // Ignora valores undefined
+    if (value === undefined) continue;
+    
+    // Trata campos de data
+    if (camposData.includes(key)) {
+      if (value === null || value === '' || value === 'null') {
+        normalizado[key] = null;
+      } else if (typeof value === 'string') {
+        // Mantém string no formato YYYY-MM-DD
+        normalizado[key] = value;
+      } else if (value instanceof Date) {
+        // Converte Date para string
+        normalizado[key] = value.toISOString().split('T')[0];
+      } else {
+        normalizado[key] = null;
+      }
+      continue;
+    }
+    
+    // Converte strings vazias para null (exceto para campos obrigatórios)
+    if (value === '' && !['nomeCompleto', 'cpf', 'matricula', 'cargo', 'lotacao', 'situacao'].includes(key)) {
+      normalizado[key] = null;
+      continue;
+    }
+    
+    // Mantém outros valores como estão
+    normalizado[key] = value;
+  }
+  
+  return normalizado;
+}
+
 export async function GET(req: NextRequest) {
   const sessao = await obterSessao();
   if (!sessao) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
@@ -61,7 +110,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Apenas gestores podem cadastrar" }, { status: 403 });
   }
   const body = await req.json();
-  const [criado] = await db.insert(servidores).values(body).returning();
+  
+  // Normaliza os dados antes de inserir
+  const dadosNormalizados = normalizarDadosServidor(body);
+  
+  const [criado] = await db.insert(servidores).values(dadosNormalizados).returning();
   
   // Criar automaticamente um usuário para o servidor
   try {
@@ -103,10 +156,14 @@ export async function PUT(req: NextRequest) {
     }
     
     const body = await req.json();
+    
+    // Normaliza os dados antes de atualizar
+    const dadosNormalizados = normalizarDadosServidor(body);
+    
     const [atualizado] = await withRetry(() =>
       db
         .update(servidores)
-        .set({ ...body, atualizadoEm: new Date() })
+        .set({ ...dadosNormalizados, atualizadoEm: new Date() })
         .where(eq(servidores.id, Number(id)))
         .returning()
     );
