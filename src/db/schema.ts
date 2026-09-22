@@ -59,7 +59,8 @@ export const servidores = pgTable("servidores", {
   cargaHoraria: integer("carga_horaria"), // horas semanais
   jornada: varchar("jornada", { length: 60 }), // diurna, noturna, mista
   escolaridade: varchar("escolaridade", { length: 80 }),
-  dataAdmissao: date("data_admissao").notNull(),
+  diasTrabalhados: integer("dias_trabalhados"), // Quantidade de dias trabalhados até 30/06
+  dataAdmissao: date("data_admissao"),
   dataPosse: date("data_posse"),
   dataExercicio: date("data_exercicio"),
   dtingCtd: date("dt_ing_ctd"), // Data de ingresso em CTD (contrato por tempo determinado)

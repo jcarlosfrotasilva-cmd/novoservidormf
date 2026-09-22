@@ -15,6 +15,7 @@ type ServidorInfo = {
   matricula: string;
   cargo: string;
   categoria: string | null;
+  diasTrabalhados: number | null;
   dataAdmissao: string;
   podeTerAts: boolean;
 };
@@ -290,7 +291,7 @@ export default function VantagensPessoaisPage() {
                           Admissão: {formatarData(servidorInfo.dataAdmissao)}
                         </span>
                         <span className="px-2.5 py-0.5 bg-white/10 rounded-full text-xs font-semibold">
-                          Tempo: {calcularTempoServico(servidorInfo.dataAdmissao)}
+                          Tempo: {calcularTempoServico(servidorInfo.diasTrabalhados)}
                         </span>
                       </div>
                     </div>

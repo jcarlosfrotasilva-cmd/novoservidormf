@@ -30,7 +30,8 @@ type Servidor = {
   cargaHoraria: number | null;
   jornada: string | null;
   escolaridade: string | null;
-  dataAdmissao: string;
+  diasTrabalhados: number | null;
+  dataAdmissao: string | null;
   dataPosse: string | null;
   dataExercicio: string | null;
   dtingCtd: string | null;
@@ -60,6 +61,7 @@ const Vazio: Partial<Servidor> = {
   cargaHoraria: 40,
   jornada: "BÁSICA",
   escolaridade: "",
+  diasTrabalhados: null,
   dataAdmissao: "",
   dataPosse: "",
   dataExercicio: "",
@@ -416,7 +418,7 @@ export default function GestorPage() {
                           <td className="px-3 py-3 font-mono text-slate-700">{s.matricula}</td>
                           <td className="px-3 py-3 text-slate-700">{s.cargo}</td>
                           <td className="px-3 py-3 text-slate-600">{formatarData(s.dataAdmissao)}</td>
-                          <td className="px-3 py-3 text-slate-600 text-xs">{calcularTempoServico(s.dataAdmissao)}</td>
+                          <td className="px-3 py-3 text-slate-600 text-xs">{calcularTempoServico(s.diasTrabalhados)}</td>
                           <td className="px-3 py-3">
                             <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold ring-1 ${situacaoCor(s.situacao)}`}>
                               {s.situacao}
@@ -504,7 +506,8 @@ export default function GestorPage() {
                 <Select label="Jornada" value={form.jornada || ""} onChange={(v) => setForm({ ...form, jornada: v })} opcoes={["REDUZIDA", "INICIAL", "BÁSICA", "INTEGRAL", "AMPLIADA", "COMPLETA"]} />
                 <Select label="Escolaridade" value={form.escolaridade || ""} onChange={(v) => setForm({ ...form, escolaridade: v })} opcoes={["Ensino Médio", "Ensino Superior", "Especialização", "Mestrado", "Doutorado"]} />
                 <Select label="Situação" value={form.situacao || "Ativo"} onChange={(v) => setForm({ ...form, situacao: v })} opcoes={["Ativo", "Inativo", "Afastado", "Aposentado", "Exonerado"]} />
-                <Input label="Data de Admissão *" type="date" value={form.dataAdmissao || ""} onChange={(v) => setForm({ ...form, dataAdmissao: v })} required />
+                <Input label="Dias Trabalhados (até 30/06)" type="number" value={form.diasTrabalhados?.toString() || ""} onChange={(v) => setForm({ ...form, diasTrabalhados: v ? Number(v) : null })} />
+                <Input label="Data de Admissão" type="date" value={form.dataAdmissao || ""} onChange={(v) => setForm({ ...form, dataAdmissao: v })} />
                 <Input label="Data de Posse" type="date" value={form.dataPosse || ""} onChange={(v) => setForm({ ...form, dataPosse: v })} />
                 <Input label="Data de Exercício" type="date" value={form.dataExercicio || ""} onChange={(v) => setForm({ ...form, dataExercicio: v })} />
                 <Input label="Ingresso CTD" type="date" value={form.dtingCtd || ""} onChange={(v) => setForm({ ...form, dtingCtd: v })} />

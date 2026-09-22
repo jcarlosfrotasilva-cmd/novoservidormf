@@ -226,6 +226,7 @@ export default function GestorServidorDetail() {
             <Campo label="Nível">{servidor.nivel}</Campo>
             <Campo label="Jornada">{servidor.jornada}</Campo>
             <Campo label="Carga Horária">{servidor.cargaHoraria ? `${servidor.cargaHoraria}h semanais` : "—"}</Campo>
+            <Campo label="Dias Trabalhados">{servidor.diasTrabalhados || "—"}</Campo>
             <Campo label="Data de Admissão">{formatarData(servidor.dataAdmissao)}</Campo>
             <Campo label="Data de Posse">{formatarData(servidor.dataPosse)}</Campo>
             <Campo label="Data de Exercício">{formatarData(servidor.dataExercicio)}</Campo>

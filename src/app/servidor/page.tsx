@@ -29,7 +29,8 @@ type Servidor = {
   cargaHoraria: number | null;
   jornada: string | null;
   escolaridade: string | null;
-  dataAdmissao: string;
+  diasTrabalhados: number | null;
+  dataAdmissao: string | null;
   dataPosse: string | null;
   dataExercicio: string | null;
   dtingCtd: string | null;
@@ -195,7 +196,7 @@ export default function ServidorPage() {
 
         {/* Cards de estatísticas */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
-          <StatCard label="Tempo de Serviço" valor={calcularTempoServico(servidor.dataAdmissao)} icone="⏱️" cor="sky" />
+          <StatCard label="Tempo de Serviço" valor={calcularTempoServico(servidor.diasTrabalhados)} icone="⏱️" cor="sky" />
           <StatCard label="Vantagens Ativas" valor={String(vantagensAtivas)} icone="✨" cor="emerald" />
           <StatCard label="Total em %" valor={`${formatarMoeda(somaPercentual)}%`} icone="📊" cor="indigo" />
           <StatCard label="Eventos" valor={String(historico.length)} icone="📅" cor="amber" />

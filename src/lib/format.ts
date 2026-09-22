@@ -18,18 +18,29 @@ export function formatarMoeda(v: number | string | null | undefined): string {
   return n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-export function calcularTempoServico(dataAdmissao: string): string {
-  if (!dataAdmissao) return "—";
-  const inicio = new Date(dataAdmissao + "T00:00:00");
-  const agora = new Date();
-  let anos = agora.getFullYear() - inicio.getFullYear();
-  let meses = agora.getMonth() - inicio.getMonth();
-  if (meses < 0) {
-    anos--;
-    meses += 12;
+export function calcularTempoServico(diasTrabalhados: number | null | undefined): string {
+  if (!diasTrabalhados || diasTrabalhados <= 0) return "—";
+  
+  // Considera ano comercial: 365 dias
+  // Considera mês comercial: 30 dias
+  const anos = Math.floor(diasTrabalhados / 365);
+  const diasRestantesAposAnos = diasTrabalhados % 365;
+  const meses = Math.floor(diasRestantesAposAnos / 30);
+  const dias = diasRestantesAposAnos % 30;
+  
+  const partes: string[] = [];
+  
+  if (anos > 0) {
+    partes.push(`${anos} ano${anos !== 1 ? "s" : ""}`);
   }
-  if (anos < 0) return "—";
-  return `${anos} ano${anos !== 1 ? "s" : ""} e ${meses} mes${meses !== 1 ? "es" : ""}`;
+  if (meses > 0) {
+    partes.push(`${meses} mes${meses !== 1 ? "es" : ""}`);
+  }
+  if (dias > 0 || partes.length === 0) {
+    partes.push(`${dias} dia${dias !== 1 ? "s" : ""}`);
+  }
+  
+  return partes.join(", ");
 }
 
 export function cn(...classes: (string | undefined | null | false)[]): string {
