@@ -1,74 +1,145 @@
 "use client";
 
-import Link from "next/link";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
-type Props = {
+interface HeaderProps {
   nome: string;
   papel: "servidor" | "gestor";
   voltarPara?: string;
-};
+}
 
-export function Header({ nome, papel, voltarPara }: Props) {
+export function Header({ nome, papel, voltarPara }: HeaderProps) {
   const router = useRouter();
+  const [menuAberto, setMenuAberto] = useState(false);
 
-  async function sair() {
+  const handleLogout = async () => {
     await fetch("/api/auth", { method: "DELETE" });
     router.push("/");
-  }
+    router.refresh();
+  };
 
   return (
-    <header className="no-print sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm print:hidden">
-      <div className="max-w-7xl mx-auto px-4 md:px-6 py-3 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3 min-w-0">
-          {voltarPara && (
-            <Link
-              href={voltarPara}
-              className="hidden md:flex w-9 h-9 rounded-lg bg-slate-100 hover:bg-slate-200 items-center justify-center transition"
-              title="Voltar"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-                <path d="M19 12H5M12 19l-7-7 7-7" />
-              </svg>
+    <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo e navegação */}
+          <div className="flex items-center gap-4">
+            {voltarPara && (
+              <Link
+                href={voltarPara}
+                className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
+                title="Voltar"
+              >
+                <svg
+                  className="w-5 h-5 text-slate-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 19l-7-7 7-7"
+                  />
+                </svg>
+              </Link>
+            )}
+            
+            <Link href={papel === "gestor" ? "/gestor" : "/servidor"} className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-indigo-700 flex items-center justify-center shadow-md">
+                <svg
+                  className="w-6 h-6 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h1 className="text-lg font-bold text-slate-900">
+                  EE Profa. Marlene Frattini
+                </h1>
+                <p className="text-xs text-slate-500 font-medium">
+                  {papel === "gestor" ? "Painel Administrativo" : "Portal do Servidor"}
+                </p>
+              </div>
             </Link>
-          )}
-          <Link href={papel === "gestor" ? "/gestor" : "/servidor"} className="flex items-center gap-2.5 min-w-0">
-            <div className={`w-9 h-9 rounded-lg flex items-center justify-center text-white shrink-0 ${
-              papel === "gestor" ? "bg-slate-900" : "bg-gradient-to-br from-sky-600 to-indigo-700"
-            }`}>
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="w-5 h-5">
-                <path d="M3 21h18" />
-                <path d="M5 21V10l7-5 7 5v11" />
-                <path d="M9 21v-6h6v6" />
-              </svg>
-            </div>
-            <div className="min-w-0">
-              <p className="text-[11px] uppercase tracking-wider text-slate-500 font-medium">EE Profa. Marlene Frattini</p>
-              <p className="text-sm font-semibold text-slate-900 truncate">
-                {papel === "gestor" ? "Painel do Gestor" : "Portal do Servidor"}
-              </p>
-            </div>
-          </Link>
-        </div>
+          </div>
 
-        <div className="flex items-center gap-2">
-          <div className="hidden sm:block text-right">
-            <p className="text-sm font-medium text-slate-900 truncate max-w-[200px]">{nome}</p>
-            <p className="text-xs text-slate-500 capitalize">{papel}</p>
+          {/* Menu do usuário */}
+          <div className="relative">
+            <button
+              onClick={() => setMenuAberto(!menuAberto)}
+              className="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-slate-100 transition-colors"
+            >
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-semibold text-sm shadow-md">
+                {nome.charAt(0).toUpperCase()}
+              </div>
+              <div className="hidden sm:block text-left">
+                <p className="text-sm font-semibold text-slate-900">{nome}</p>
+                <p className="text-xs text-slate-500 capitalize">{papel}</p>
+              </div>
+              <svg
+                className={`w-4 h-4 text-slate-400 transition-transform ${
+                  menuAberto ? "rotate-180" : ""
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </button>
+
+            {/* Dropdown */}
+            {menuAberto && (
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setMenuAberto(false)}
+                />
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-slate-200 py-2 z-50 animate-scale-in">
+                  <div className="px-4 py-3 border-b border-slate-100">
+                    <p className="text-sm font-semibold text-slate-900">{nome}</p>
+                    <p className="text-xs text-slate-500 capitalize">{papel}</p>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                      />
+                    </svg>
+                    Sair do sistema
+                  </button>
+                </div>
+              </>
+            )}
           </div>
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 text-white flex items-center justify-center text-sm font-bold">
-            {nome.charAt(0).toUpperCase()}
-          </div>
-          <button
-            onClick={sair}
-            className="px-3 py-2 text-sm text-slate-600 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
-            title="Sair"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-              <path d="M16 17l5-5-5-5M21 12H9" />
-            </svg>
-          </button>
         </div>
       </div>
     </header>

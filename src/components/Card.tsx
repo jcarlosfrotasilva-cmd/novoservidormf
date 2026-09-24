@@ -1,36 +1,45 @@
-import { ReactNode } from "react";
-import { cn } from "@/lib/format";
-
-type Props = {
-  titulo: string;
+interface CardProps {
+  titulo?: string;
   subtitulo?: string;
-  acao?: ReactNode;
-  children: ReactNode;
+  children: React.ReactNode;
   className?: string;
-};
+  acao?: React.ReactNode;
+}
 
-export function Card({ titulo, subtitulo, acao, children, className }: Props) {
+export function Card({ titulo, subtitulo, children, className = "", acao }: CardProps) {
   return (
-    <section className={cn("bg-white rounded-2xl shadow-sm border border-slate-200 print-card print-shadow-none", className)}>
-      <header className="px-5 md:px-6 py-4 border-b border-slate-100 flex items-start justify-between gap-3 flex-wrap">
-        <div>
-          <h2 className="text-base md:text-lg font-bold text-slate-900 flex items-center gap-2">
-            {titulo}
-          </h2>
-          {subtitulo && <p className="text-sm text-slate-500 mt-0.5">{subtitulo}</p>}
+    <div className={`card-modern p-6 ${className}`}>
+      {(titulo || acao) && (
+        <div className="flex items-start justify-between mb-4 pb-4 border-b border-slate-200/60">
+          <div>
+            {titulo && (
+              <h3 className="text-lg font-bold text-slate-900">{titulo}</h3>
+            )}
+            {subtitulo && (
+              <p className="text-sm text-slate-500 mt-1">{subtitulo}</p>
+            )}
+          </div>
+          {acao && <div>{acao}</div>}
         </div>
-        {acao && <div className="no-print">{acao}</div>}
-      </header>
-      <div className="px-5 md:px-6 py-5">{children}</div>
-    </section>
+      )}
+      {children}
+    </div>
   );
 }
 
-export function Campo({ label, children }: { label: string; children: ReactNode }) {
+interface CampoProps {
+  label: string;
+  children: React.ReactNode;
+  className?: string;
+}
+
+export function Campo({ label, children, className = "" }: CampoProps) {
   return (
-    <div>
-      <dt className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-1">{label}</dt>
-      <dd className="text-sm text-slate-900 font-medium">{children ?? "—"}</dd>
+    <div className={className}>
+      <dt className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">
+        {label}
+      </dt>
+      <dd className="text-sm font-medium text-slate-900">{children}</dd>
     </div>
   );
 }

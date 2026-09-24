@@ -252,10 +252,43 @@ export const afastamentos = pgTable("afastamentos", {
   criadoEm: timestamp("criado_em").notNull().defaultNow(),
 });
 
+// ============================================================
+// REQUERIMENTOS - Sistema de solicitações dos servidores
+// ============================================================
+export const requerimentos = pgTable("requerimentos", {
+  id: serial("id").primaryKey(),
+  servidorId: integer("servidor_id")
+    .notNull()
+    .references(() => servidores.id, { onDelete: "cascade" }),
+  
+  // Dados da solicitação
+  tipo: varchar("tipo", { length: 100 }).notNull(),
+  assunto: varchar("assunto", { length: 255 }).notNull(),
+  descricao: text("descricao").notNull(),
+  documentoUrl: text("documento_url"),
+  documentoNome: varchar("documento_nome", { length: 255 }),
+  
+  // Status e análise
+  status: varchar("status", { length: 20 }).notNull().default("pendente"),
+  dataAnalise: timestamp("data_analise"),
+  analisadoPor: varchar("analisado_por", { length: 200 }),
+  
+  // Resposta da gestão
+  feedback: text("feedback"),
+  documentoRetornoUrl: text("documento_retorno_url"),
+  documentoRetornoNome: varchar("documento_retorno_nome", { length: 255 }),
+  
+  // Metadados
+  criadoEm: timestamp("criado_em").notNull().defaultNow(),
+  atualizadoEm: timestamp("atualizado_em").notNull().defaultNow(),
+});
+
 export type Servidor = typeof servidores.$inferSelect;
 export type NovoServidor = typeof servidores.$inferInsert;
 export type TipoVantagem = typeof tiposVantagem.$inferSelect;
 export type ServidorVantagem = typeof servidorVantagens.$inferSelect;
 export type HistoricoFuncional = typeof historicoFuncional.$inferSelect;
 export type Afastamento = typeof afastamentos.$inferSelect;
+export type Requerimento = typeof requerimentos.$inferSelect;
+export type NovoRequerimento = typeof requerimentos.$inferInsert;
 export type User = typeof users.$inferSelect;

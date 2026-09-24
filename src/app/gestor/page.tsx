@@ -227,7 +227,7 @@ export default function GestorPage() {
         {aba === "lista" ? (
           <>
             {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
               <StatBox label="Total de Servidores" valor={servidores.length} />
               <StatBox label="Ativos" valor={servidores.filter((s) => s.situacao === "Ativo").length} cor="emerald" />
               <StatBox label="Afastados" valor={servidores.filter((s) => s.situacao === "Afastado").length} cor="amber" />
@@ -235,22 +235,24 @@ export default function GestorPage() {
             </div>
 
             {/* Atalhos rápidos */}
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
               <Link
                 href="/gestor/vantagens-pessoais"
-                className="group bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-5 text-white shadow-md hover:shadow-lg transition"
+                className="group relative overflow-hidden bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-700 rounded-2xl p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
               >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-xs uppercase tracking-widest text-indigo-200 font-semibold mb-1">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+                <div className="relative flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="inline-flex items-center gap-2 px-2.5 py-1 bg-white/20 rounded-lg text-xs font-semibold mb-3">
+                      <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span>
                       Novo módulo
-                    </p>
-                    <h3 className="text-lg font-bold">Vantagens Pessoais</h3>
-                    <p className="text-sm text-indigo-100 mt-1">
+                    </div>
+                    <h3 className="text-xl font-bold mb-2">Vantagens Pessoais</h3>
+                    <p className="text-sm text-indigo-100 leading-relaxed">
                       ATS, Quinquênios e cálculos automáticos por tempo de serviço
                     </p>
                   </div>
-                  <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                  <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-2xl group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
                     🧮
                   </div>
                 </div>
@@ -261,77 +263,101 @@ export default function GestorPage() {
                   e.preventDefault();
                   setAba("catalogo");
                 }}
-                className="group bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition"
+                className="group relative overflow-hidden bg-white rounded-2xl p-6 border border-slate-200/60 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
               >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-xs uppercase tracking-widest text-slate-500 font-semibold mb-1">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-sky-50 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+                <div className="relative flex items-start justify-between">
+                  <div className="flex-1">
+                    <p className="text-xs uppercase tracking-wider text-slate-500 font-semibold mb-2">
                       Catálogo
                     </p>
-                    <h3 className="text-lg font-bold text-slate-900">Tipos de Vantagem</h3>
-                    <p className="text-sm text-slate-600 mt-1">
+                    <h3 className="text-xl font-bold text-slate-900 mb-2">Tipos de Vantagem</h3>
+                    <p className="text-sm text-slate-600 leading-relaxed">
                       Gerencie o catálogo geral de vantagens
                     </p>
                   </div>
-                  <div className="w-10 h-10 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-sky-100 to-sky-200 text-sky-700 flex items-center justify-center text-2xl group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
                     📋
                   </div>
                 </div>
               </Link>
               <Link
                 href="/gestor/licenca-premio"
-                className="group bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition"
+                className="group relative overflow-hidden bg-white rounded-2xl p-6 border border-slate-200/60 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
               >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-xs uppercase tracking-widest text-slate-500 font-semibold mb-1">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+                <div className="relative flex items-start justify-between">
+                  <div className="flex-1">
+                    <p className="text-xs uppercase tracking-wider text-slate-500 font-semibold mb-2">
                       Férias especiais
                     </p>
-                    <h3 className="text-lg font-bold text-slate-900">Licença Prêmio</h3>
-                    <p className="text-sm text-slate-600 mt-1">
+                    <h3 className="text-xl font-bold text-slate-900 mb-2">Licença Prêmio</h3>
+                    <p className="text-sm text-slate-600 leading-relaxed">
                       Certidões, gozo e pecúnia
                     </p>
                   </div>
-                  <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-100 to-indigo-200 text-indigo-700 flex items-center justify-center text-2xl group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
                     🏖️
                   </div>
                 </div>
               </Link>
               <Link
                 href="/gestor/evolucao-funcional"
-                className="group bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition"
+                className="group relative overflow-hidden bg-white rounded-2xl p-6 border border-slate-200/60 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
               >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-xs uppercase tracking-widest text-slate-500 font-semibold mb-1">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+                <div className="relative flex items-start justify-between">
+                  <div className="flex-1">
+                    <p className="text-xs uppercase tracking-wider text-slate-500 font-semibold mb-2">
                       Progressão
                     </p>
-                    <h3 className="text-lg font-bold text-slate-900">Evolução Funcional</h3>
-                    <p className="text-sm text-slate-600 mt-1">
+                    <h3 className="text-xl font-bold text-slate-900 mb-2">Evolução Funcional</h3>
+                    <p className="text-sm text-slate-600 leading-relaxed">
                       Via não acadêmica (PEB/Diretor)
                     </p>
                   </div>
-                  <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-100 to-emerald-200 text-emerald-700 flex items-center justify-center text-2xl group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
                     📈
                   </div>
                 </div>
               </Link>
               <Link
                 href="/gestor/relatorios"
-                className="group bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition"
+                className="group relative overflow-hidden bg-white rounded-2xl p-6 border border-slate-200/60 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
               >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-xs uppercase tracking-widest text-slate-500 font-semibold mb-1">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-amber-50 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+                <div className="relative flex items-start justify-between">
+                  <div className="flex-1">
+                    <p className="text-xs uppercase tracking-wider text-slate-500 font-semibold mb-2">
                       Impressão
                     </p>
-                    <h3 className="text-lg font-bold text-slate-900">Relatórios</h3>
-                    <p className="text-sm text-slate-600 mt-1">
+                    <h3 className="text-xl font-bold text-slate-900 mb-2">Relatórios</h3>
+                    <p className="text-sm text-slate-600 leading-relaxed">
                       Gerais, por cargo e categoria
                     </p>
                   </div>
-                  <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-100 to-amber-200 text-amber-700 flex items-center justify-center text-2xl group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
                     📊
+                  </div>
+                </div>
+              </Link>
+              <Link
+                href="/gestor/requerimentos"
+                className="group relative overflow-hidden bg-white rounded-2xl p-6 border border-slate-200/60 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+              >
+                <div className="absolute top-0 right-0 w-32 h-32 bg-purple-50 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+                <div className="relative flex items-start justify-between">
+                  <div className="flex-1">
+                    <p className="text-xs uppercase tracking-wider text-slate-500 font-semibold mb-2">
+                      Solicitações
+                    </p>
+                    <h3 className="text-xl font-bold text-slate-900 mb-2">Requerimentos</h3>
+                    <p className="text-sm text-slate-600 leading-relaxed">
+                      Analise pedidos dos servidores
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-100 to-purple-200 text-purple-700 flex items-center justify-center text-2xl group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
+                    📝
                   </div>
                 </div>
               </Link>
@@ -341,9 +367,9 @@ export default function GestorPage() {
             <Aniversariantes />
 
             {/* Barra de busca + ação */}
-            <div className="flex items-center gap-3 mb-4 flex-wrap">
-              <div className="flex-1 min-w-[240px] relative">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+            <div className="flex items-center gap-3 mb-6 flex-wrap">
+              <div className="flex-1 min-w-[280px] relative">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
                   <circle cx="11" cy="11" r="8" />
                   <path d="m21 21-4.3-4.3" />
                 </svg>
@@ -355,23 +381,23 @@ export default function GestorPage() {
                     recarregar(e.target.value);
                   }}
                   placeholder="Buscar por nome, matrícula ou CPF..."
-                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm"
+                  className="input-modern pl-12 pr-4 py-3 text-sm font-medium"
                 />
               </div>
               <button
                 onClick={() => setModalImport(true)}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold shadow-sm transition"
+                className="btn-secondary inline-flex items-center gap-2"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
                 </svg>
                 Importar Excel
               </button>
               <button
                 onClick={abrirNovo}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-semibold shadow-sm transition"
+                className="btn-primary inline-flex items-center gap-2"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5">
                   <path d="M12 5v14M5 12h14" />
                 </svg>
                 Novo Servidor
@@ -379,56 +405,76 @@ export default function GestorPage() {
             </div>
 
             {/* Tabela */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="card-modern overflow-hidden">
               {carregando ? (
-                <div className="p-12 text-center text-slate-500">Carregando...</div>
+                <div className="p-16 text-center">
+                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-indigo-100 mb-4">
+                    <svg className="w-6 h-6 text-indigo-600 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  </div>
+                  <p className="text-slate-600 font-medium">Carregando servidores...</p>
+                </div>
               ) : filtrados.length === 0 ? (
-                <div className="p-12 text-center">
-                  <p className="text-slate-600 font-medium">Nenhum servidor encontrado</p>
-                  <p className="text-sm text-slate-500 mt-1">Cadastre o primeiro servidor para começar.</p>
+                <div className="p-16 text-center">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 mb-4">
+                    <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                    </svg>
+                  </div>
+                  <p className="text-slate-900 font-semibold text-lg mb-2">Nenhum servidor encontrado</p>
+                  <p className="text-sm text-slate-500">Cadastre o primeiro servidor para começar.</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead className="bg-slate-50 border-b border-slate-200 text-left text-xs uppercase tracking-wider text-slate-600">
+                  <table className="table-modern">
+                    <thead>
                       <tr>
-                        <th className="px-5 py-3">Servidor</th>
-                        <th className="px-3 py-3">Matrícula</th>
-                        <th className="px-3 py-3">Cargo</th>
-                        <th className="px-3 py-3">Admissão</th>
-                        <th className="px-3 py-3">Tempo</th>
-                        <th className="px-3 py-3">Situação</th>
-                        <th className="px-3 py-3 text-right">Ações</th>
+                        <th>Servidor</th>
+                        <th>Matrícula</th>
+                        <th>Cargo</th>
+                        <th>Admissão</th>
+                        <th>Tempo</th>
+                        <th>Situação</th>
+                        <th className="text-right">Ações</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody>
                       {filtrados.map((s) => (
-                        <tr key={s.id} className="hover:bg-slate-50 transition">
-                          <td className="px-5 py-3">
+                        <tr key={s.id}>
+                          <td>
                             <div className="flex items-center gap-3">
-                              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-sky-500 to-indigo-600 text-white flex items-center justify-center text-sm font-bold shrink-0">
+                              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center text-sm font-bold shrink-0 shadow-md">
                                 {s.nomeCompleto.charAt(0)}
                               </div>
                               <div className="min-w-0">
                                 <p className="font-semibold text-slate-900 truncate">{s.nomeCompleto}</p>
-                                <p className="text-xs text-slate-500">{formatarCPF(s.cpf)}</p>
+                                <p className="text-xs text-slate-500 font-mono">{formatarCPF(s.cpf)}</p>
                               </div>
                             </div>
                           </td>
-                          <td className="px-3 py-3 font-mono text-slate-700">{s.matricula}</td>
-                          <td className="px-3 py-3 text-slate-700">{s.cargo}</td>
-                          <td className="px-3 py-3 text-slate-600">{formatarData(s.dataAdmissao)}</td>
-                          <td className="px-3 py-3 text-slate-600 text-xs">{calcularTempoServico(s.diasTrabalhados)}</td>
-                          <td className="px-3 py-3">
-                            <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold ring-1 ${situacaoCor(s.situacao)}`}>
+                          <td>
+                            <span className="font-mono text-sm font-semibold text-slate-700">{s.matricula}</span>
+                          </td>
+                          <td>
+                            <span className="text-sm text-slate-700">{s.cargo}</span>
+                          </td>
+                          <td>
+                            <span className="text-sm text-slate-600">{formatarData(s.dataAdmissao)}</span>
+                          </td>
+                          <td>
+                            <span className="text-xs font-medium text-slate-600">{calcularTempoServico(s.diasTrabalhados)}</span>
+                          </td>
+                          <td>
+                            <span className={`badge-modern ${situacaoCor(s.situacao)}`}>
                               {s.situacao}
                             </span>
                           </td>
-                          <td className="px-3 py-3 text-right whitespace-nowrap">
+                          <td>
                             <div className="flex items-center justify-end gap-1">
                               <Link
                                 href={`/gestor/servidores/${s.id}`}
-                                className="p-2 rounded-lg text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 transition"
+                                className="p-2 rounded-lg text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
                                 title="Visualizar detalhes"
                               >
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
@@ -438,7 +484,7 @@ export default function GestorPage() {
                               </Link>
                               <button
                                 onClick={() => abrirEditar(s)}
-                                className="p-2 rounded-lg text-slate-600 hover:bg-sky-50 hover:text-sky-700 transition"
+                                className="p-2 rounded-lg text-slate-600 hover:bg-sky-50 hover:text-sky-700 transition-colors"
                                 title="Editar"
                               >
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
@@ -447,7 +493,7 @@ export default function GestorPage() {
                               </button>
                               <button
                                 onClick={() => excluir(s)}
-                                className="p-2 rounded-lg text-slate-600 hover:bg-rose-50 hover:text-rose-700 transition"
+                                className="p-2 rounded-lg text-slate-600 hover:bg-rose-50 hover:text-rose-700 transition-colors"
                                 title="Excluir"
                               >
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">

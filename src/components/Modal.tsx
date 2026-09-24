@@ -1,46 +1,78 @@
 "use client";
 
-import { ReactNode, useEffect } from "react";
+import { useEffect, useRef } from "react";
 
-type Props = {
+interface ModalProps {
   aberto: boolean;
   onClose: () => void;
   titulo: string;
-  children: ReactNode;
+  children: React.ReactNode;
   largura?: string;
-};
+}
 
-export function Modal({ aberto, onClose, titulo, children, largura = "max-w-2xl" }: Props) {
+export function Modal({ aberto, onClose, titulo, children, largura = "max-w-2xl" }: ModalProps) {
+  const modalRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    if (!aberto) return;
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
+    if (aberto) {
+      document.body.style.overflow = "hidden";
+      
+      // Fechar com ESC
+      const handleEsc = (e: KeyboardEvent) => {
+        if (e.key === "Escape") onClose();
+      };
+      window.addEventListener("keydown", handleEsc);
+      
+      return () => {
+        document.body.style.overflow = "";
+        window.removeEventListener("keydown", handleEsc);
+      };
     }
-    document.addEventListener("keydown", onKey);
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
-    };
   }, [aberto, onClose]);
 
   if (!aberto) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-fade-in no-print">
-      <div className={`bg-white rounded-2xl shadow-2xl w-full ${largura} max-h-[90vh] overflow-hidden flex flex-col`}>
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
-          <h3 className="text-lg font-bold text-slate-900">{titulo}</h3>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      {/* Backdrop com blur */}
+      <div
+        className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm animate-fade-in"
+        onClick={onClose}
+      />
+      
+      {/* Modal */}
+      <div
+        ref={modalRef}
+        className={`relative bg-white rounded-2xl shadow-2xl w-full ${largura} max-h-[90vh] overflow-hidden animate-scale-in`}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white">
+          <h2 className="text-xl font-bold text-slate-900">{titulo}</h2>
           <button
             onClick={onClose}
-            className="w-9 h-9 rounded-lg hover:bg-slate-100 flex items-center justify-center transition"
+            className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
+            aria-label="Fechar"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
-              <path d="M18 6L6 18M6 6l12 12" />
+            <svg
+              className="w-5 h-5 text-slate-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
-        <div className="overflow-y-auto px-6 py-5">{children}</div>
+        
+        {/* Content */}
+        <div className="overflow-y-auto max-h-[calc(90vh-80px)] p-6">
+          {children}
+        </div>
       </div>
     </div>
   );
