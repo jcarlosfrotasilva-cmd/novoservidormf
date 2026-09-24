@@ -6,13 +6,11 @@ import { useParams, useRouter } from "next/navigation";
 import { Header } from "@/components/Header";
 import { Card, Campo } from "@/components/Card";
 import { Modal } from "@/components/Modal";
-import { formatarData, formatarCPF, formatarMoeda, calcularTempoServico, situacaoCor } from "@/lib/format";
+import { formatarData, formatarCPF, calcularTempoServico, situacaoCor } from "@/lib/format";
 
 type Servidor = any;
-type Vantagem = any;
 type Historico = any;
 type Afastamento = any;
-type TipoVantagem = { id: number; codigo: string; nome: string; baseCalculo: string | null };
 
 export default function GestorServidorDetail() {
   const params = useParams();
@@ -21,15 +19,11 @@ export default function GestorServidorDetail() {
 
   const [sessao, setSessao] = useState<any>(null);
   const [servidor, setServidor] = useState<Servidor | null>(null);
-  const [vantagens, setVantagens] = useState<Vantagem[]>([]);
   const [historico, setHistorico] = useState<Historico[]>([]);
   const [afastamentos, setAfastamentos] = useState<Afastamento[]>([]);
-  const [tipos, setTipos] = useState<TipoVantagem[]>([]);
-  const [aba, setAba] = useState<"vantagens" | "historico" | "afastamentos">("vantagens");
+  const [aba, setAba] = useState<"historico" | "afastamentos">("historico");
 
   // Modais
-  const [modalVantagem, setModalVantagem] = useState(false);
-  const [formVantagem, setFormVantagem] = useState<any>({});
   const [modalHist, setModalHist] = useState(false);
   const [formHist, setFormHist] = useState<any>({});
   const [modalAfast, setModalAfast] = useState(false);
@@ -46,17 +40,13 @@ export default function GestorServidorDetail() {
         }
         setSessao(auth);
 
-      const [s, v, h, t] = await Promise.all([
-        fetch(`/api/servidores?id=${id}`).then((r) => r.json()),
-        fetch(`/api/vantagens?servidorId=${id}`).then((r) => r.json()),
-        fetch(`/api/historico?servidorId=${id}`).then((r) => r.json()),
-        fetch(`/api/vantagens?catalogo=1`).then((r) => r.json()),
-      ]);
-      setServidor(s);
-      setVantagens(v);
-      setHistorico(h.historico || []);
-      setAfastamentos(h.afastamentos || []);
-      setTipos(t);
+        const [s, h] = await Promise.all([
+          fetch(`/api/servidores?id=${id}`).then((r) => r.json()),
+          fetch(`/api/historico?servidorId=${id}`).then((r) => r.json()),
+        ]);
+        setServidor(s);
+        setHistorico(h.historico || []);
+        setAfastamentos(h.afastamentos || []);
       } catch (err) {
         router.replace("/gestor");
       }
@@ -64,51 +54,10 @@ export default function GestorServidorDetail() {
     carregar();
   }, [id, router]);
 
-  async function recarregarVantagens() {
-    const v = await (await fetch(`/api/vantagens?servidorId=${id}`)).json();
-    setVantagens(v);
-  }
   async function recarregarHistorico() {
     const h = await (await fetch(`/api/historico?servidorId=${id}`)).json();
     setHistorico(h.historico || []);
     setAfastamentos(h.afastamentos || []);
-  }
-
-  // ===== Vantagens =====
-  function abrirNovaVantagem() {
-    setFormVantagem({
-      servidorId: Number(id),
-      tipoVantagemId: tipos[0]?.id || 0,
-      percentual: "",
-      valorFixo: "",
-      dataInicio: "",
-      dataFim: "",
-      fundamentoLegal: "",
-      observacao: "",
-    });
-    setModalVantagem(true);
-  }
-
-  async function salvarVantagem(e: FormEvent) {
-    e.preventDefault();
-    await fetch("/api/vantagens", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...formVantagem,
-        percentual: formVantagem.percentual || null,
-        valorFixo: formVantagem.valorFixo || null,
-        dataFim: formVantagem.dataFim || null,
-      }),
-    });
-    setModalVantagem(false);
-    recarregarVantagens();
-  }
-
-  async function excluirVantagem(vid: number) {
-    if (!confirm("Remover esta vantagem do servidor?")) return;
-    await fetch(`/api/vantagens?id=${vid}`, { method: "DELETE" });
-    recarregarVantagens();
   }
 
   // ===== Histórico =====
@@ -116,6 +65,7 @@ export default function GestorServidorDetail() {
     setFormHist({ servidorId: Number(id), dataOcorrencia: "", tipoEvento: "", descricao: "", atoLegal: "" });
     setModalHist(true);
   }
+
   async function salvarHist(e: FormEvent) {
     e.preventDefault();
     await fetch("/api/historico?tipo=historico", {
@@ -126,6 +76,7 @@ export default function GestorServidorDetail() {
     setModalHist(false);
     recarregarHistorico();
   }
+
   async function excluirHist(hid: number) {
     if (!confirm("Excluir este evento do histórico?")) return;
     await fetch(`/api/historico?id=${hid}&tipo=historico`, { method: "DELETE" });
@@ -137,6 +88,7 @@ export default function GestorServidorDetail() {
     setFormAfast({ servidorId: Number(id), tipo: "", dataInicio: "", dataFim: "", dias: "", motivo: "" });
     setModalAfast(true);
   }
+
   async function salvarAfast(e: FormEvent) {
     e.preventDefault();
     await fetch("/api/historico?tipo=afastamento", {
@@ -147,6 +99,7 @@ export default function GestorServidorDetail() {
     setModalAfast(false);
     recarregarHistorico();
   }
+
   async function excluirAfast(aid: number) {
     if (!confirm("Excluir este afastamento?")) return;
     await fetch(`/api/historico?id=${aid}&tipo=afastamento`, { method: "DELETE" });
@@ -160,10 +113,6 @@ export default function GestorServidorDetail() {
       </div>
     );
   }
-
-  const somaPercentual = vantagens
-    .filter((v: Vantagem) => v.tipoBaseCalculo === "percentual" && v.percentual)
-    .reduce((acc: number, v: Vantagem) => acc + parseFloat(v.percentual || "0"), 0);
 
   return (
     <div className="min-h-screen bg-slate-50 print-container">
@@ -207,10 +156,9 @@ export default function GestorServidorDetail() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
-          <StatBox label="Tempo de Serviço" valor={calcularTempoServico(servidor.dataAdmissao)} />
-          <StatBox label="Vantagens Ativas" valor={vantagens.filter((v: Vantagem) => !v.dataFim).length} />
-          <StatBox label="Total em %" valor={`${formatarMoeda(somaPercentual)}%`} />
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 mb-6">
+          <StatBox label="Tempo de Serviço" valor={calcularTempoServico(servidor.diasTrabalhados)} />
+          <StatBox label="Histórico" valor={historico.length} />
           <StatBox label="Afastamentos" valor={afastamentos.length} />
         </div>
 
@@ -235,10 +183,55 @@ export default function GestorServidorDetail() {
           </dl>
         </Card>
 
+        {/* Módulos de Vantagens */}
+        <div className="grid md:grid-cols-3 gap-4 mb-6">
+          <Link
+            href="/gestor/vantagens-pessoais"
+            className="card-modern p-5 hover:shadow-md transition group"
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="font-bold text-slate-900 mb-1">🧮 ATS</h3>
+                <p className="text-sm text-slate-600">Adicional por Tempo de Serviço</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-100 to-purple-100 text-indigo-700 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                🧮
+              </div>
+            </div>
+          </Link>
+          <Link
+            href="/gestor/evolucao-funcional"
+            className="card-modern p-5 hover:shadow-md transition group"
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="font-bold text-slate-900 mb-1">📈 Evolução Funcional</h3>
+                <p className="text-sm text-slate-600">Progressão de carreira</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-100 to-teal-100 text-emerald-700 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                📈
+              </div>
+            </div>
+          </Link>
+          <Link
+            href="/gestor/licenca-premio"
+            className="card-modern p-5 hover:shadow-md transition group"
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="font-bold text-slate-900 mb-1">🏖️ Licença Prêmio</h3>
+                <p className="text-sm text-slate-600">Certidões e fruições</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-100 to-blue-100 text-sky-700 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                🏖️
+              </div>
+            </div>
+          </Link>
+        </div>
+
         {/* Abas */}
         <div className="no-print p-1 bg-white rounded-xl border border-slate-200 inline-flex gap-1 mb-4">
           {([
-            ["vantagens", `✨ Vantagens (${vantagens.length})`],
             ["historico", `📜 Histórico (${historico.length})`],
             ["afastamentos", `🏥 Afastamentos (${afastamentos.length})`],
           ] as const).map(([k, label]) => (
@@ -253,59 +246,6 @@ export default function GestorServidorDetail() {
             </button>
           ))}
         </div>
-
-        {aba === "vantagens" && (
-          <Card
-            titulo="Vantagens Adquiridas"
-            acao={
-              <button onClick={abrirNovaVantagem} className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-sm font-semibold transition">
-                + Adicionar Vantagem
-              </button>
-            }
-          >
-            {vantagens.length === 0 ? (
-              <p className="text-slate-500 text-sm">Nenhuma vantagem atribuída.</p>
-            ) : (
-              <div className="overflow-x-auto -mx-5 md:-mx-6">
-                <table className="w-full text-sm">
-                  <thead className="text-left text-xs uppercase tracking-wider text-slate-500 border-b border-slate-100">
-                    <tr>
-                      <th className="px-5 md:px-6 py-2">Vantagem</th>
-                      <th className="px-3 py-2">Valor</th>
-                      <th className="px-3 py-2">Início</th>
-                      <th className="px-3 py-2">Fim</th>
-                      <th className="px-3 py-2">Fundamento</th>
-                      <th className="px-3 py-2"></th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {vantagens.map((v: Vantagem) => (
-                      <tr key={v.id} className="hover:bg-slate-50">
-                        <td className="px-5 md:px-6 py-3">
-                          <div className="font-semibold text-slate-900">{v.tipoNome}</div>
-                          <div className="text-xs text-slate-500">{v.tipoCodigo}</div>
-                        </td>
-                        <td className="px-3 py-3 font-semibold text-sky-700">
-                          {v.tipoBaseCalculo === "percentual" ? `${formatarMoeda(v.percentual)}%` : v.valorFixo ? `R$ ${formatarMoeda(v.valorFixo)}` : "—"}
-                        </td>
-                        <td className="px-3 py-3 text-slate-600">{formatarData(v.dataInicio)}</td>
-                        <td className="px-3 py-3 text-slate-600">{v.dataFim ? formatarData(v.dataFim) : "—"}</td>
-                        <td className="px-3 py-3 text-slate-600 text-xs">{v.fundamentoLegal || "—"}</td>
-                        <td className="px-3 py-3 text-right no-print">
-                          <button onClick={() => excluirVantagem(v.id)} className="p-2 rounded-lg hover:bg-rose-50 hover:text-rose-700 text-slate-500 transition">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-                              <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
-                            </svg>
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </Card>
-        )}
 
         {aba === "historico" && (
           <Card
@@ -382,68 +322,6 @@ export default function GestorServidorDetail() {
           </Card>
         )}
       </main>
-
-      {/* Modal Vantagem */}
-      <Modal aberto={modalVantagem} onClose={() => setModalVantagem(false)} titulo="Adicionar Vantagem" largura="max-w-2xl">
-        <form onSubmit={salvarVantagem} className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5">Tipo de Vantagem *</label>
-            <select
-              value={formVantagem.tipoVantagemId || ""}
-              required
-              onChange={(e) => setFormVantagem({ ...formVantagem, tipoVantagemId: Number(e.target.value) })}
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 bg-white focus:ring-2 focus:ring-sky-500 focus:outline-none text-sm"
-            >
-              <option value="">Selecione...</option>
-              {tipos.map((t) => (
-                <option key={t.id} value={t.id}>{t.codigo} - {t.nome}</option>
-              ))}
-            </select>
-          </div>
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">Percentual (%)</label>
-              <input
-                type="number"
-                step="0.01"
-                value={formVantagem.percentual || ""}
-                onChange={(e) => setFormVantagem({ ...formVantagem, percentual: e.target.value })}
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:outline-none text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">Valor Fixo (R$)</label>
-              <input
-                type="number"
-                step="0.01"
-                value={formVantagem.valorFixo || ""}
-                onChange={(e) => setFormVantagem({ ...formVantagem, valorFixo: e.target.value })}
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:outline-none text-sm"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">Data Início *</label>
-              <input type="date" required value={formVantagem.dataInicio || ""} onChange={(e) => setFormVantagem({ ...formVantagem, dataInicio: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:outline-none text-sm" />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">Data Fim</label>
-              <input type="date" value={formVantagem.dataFim || ""} onChange={(e) => setFormVantagem({ ...formVantagem, dataFim: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:outline-none text-sm" />
-            </div>
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5">Fundamento Legal</label>
-            <input type="text" value={formVantagem.fundamentoLegal || ""} onChange={(e) => setFormVantagem({ ...formVantagem, fundamentoLegal: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:outline-none text-sm" placeholder="Ex: Lei Complementar nº 1.144/2011" />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5">Observação</label>
-            <textarea rows={2} value={formVantagem.observacao || ""} onChange={(e) => setFormVantagem({ ...formVantagem, observacao: e.target.value })} className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:outline-none text-sm" />
-          </div>
-          <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
-            <button type="button" onClick={() => setModalVantagem(false)} className="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 font-semibold hover:bg-slate-50 transition">Cancelar</button>
-            <button type="submit" className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold shadow-sm transition">Adicionar</button>
-          </div>
-        </form>
-      </Modal>
 
       {/* Modal Histórico */}
       <Modal aberto={modalHist} onClose={() => setModalHist(false)} titulo="Adicionar Evento" largura="max-w-2xl">

@@ -40,19 +40,6 @@ type Servidor = {
   observacoes: string | null;
 };
 
-type Vantagem = {
-  id: number;
-  tipoNome: string;
-  tipoCodigo: string;
-  tipoBaseCalculo: string | null;
-  percentual: string | null;
-  valorFixo: string | null;
-  dataInicio: string;
-  dataFim: string | null;
-  fundamentoLegal: string | null;
-  observacao: string | null;
-};
-
 type Historico = {
   id: number;
   dataOcorrencia: string;
@@ -74,7 +61,6 @@ export default function ServidorPage() {
   const router = useRouter();
   const [sessao, setSessao] = useState<{ nome: string; papel: "servidor"; servidorId: number | null } | null>(null);
   const [servidor, setServidor] = useState<Servidor | null>(null);
-  const [vantagens, setVantagens] = useState<Vantagem[]>([]);
   const [historico, setHistorico] = useState<Historico[]>([]);
   const [afastamentos, setAfastamentos] = useState<Afastamento[]>([]);
   const [carregando, setCarregando] = useState(true);
@@ -102,18 +88,15 @@ export default function ServidorPage() {
         setSessao(auth);
 
         const sid = auth.servidorId;
-        const [sRes, vRes, hRes] = await Promise.all([
+        const [sRes, hRes] = await Promise.all([
           fetch(`/api/servidores?id=${sid}`),
-          fetch(`/api/vantagens?servidorId=${sid}`),
           fetch(`/api/historico?servidorId=${sid}`),
         ]);
         if (!ativo) return;
         const s = await sRes.json();
-        const v = await vRes.json();
         const h = await hRes.json();
         if (!ativo) return;
         setServidor(s);
-        setVantagens(v);
         setHistorico(h.historico || []);
         setAfastamentos(h.afastamentos || []);
         setCarregando(false);
@@ -161,14 +144,6 @@ export default function ServidorPage() {
     );
   }
 
-  const somaPercentual = vantagens
-    .filter((v) => v.tipoBaseCalculo === "percentual" && v.percentual)
-    .reduce((acc, v) => acc + parseFloat(v.percentual || "0"), 0);
-  const somaFixa = vantagens
-    .filter((v) => v.tipoBaseCalculo === "valor_fixo" && v.valorFixo)
-    .reduce((acc, v) => acc + parseFloat(v.valorFixo || "0"), 0);
-  const vantagensAtivas = vantagens.filter((v) => !v.dataFim).length;
-
   return (
     <div className="min-h-screen print-container">
       <Header nome={sessao.nome} papel="servidor" voltarPara="/" />
@@ -212,8 +187,8 @@ export default function ServidorPage() {
         {/* Cards de estatísticas */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
           <StatCard label="Tempo de Serviço" valor={calcularTempoServico(servidor.diasTrabalhados)} icone="⏱️" cor="sky" />
-          <StatCard label="Vantagens Ativas" valor={String(vantagensAtivas)} icone="✨" cor="emerald" />
-          <StatCard label="Total em %" valor={`${formatarMoeda(somaPercentual)}%`} icone="📊" cor="indigo" />
+          <StatCard label="Situação" valor={servidor.situacao} icone="📋" cor="emerald" />
+          <StatCard label="Categoria" valor={servidor.categoria || "—"} icone="🏷️" cor="indigo" />
           <StatCard label="Eventos" valor={String(historico.length)} icone="📅" cor="amber" />
         </div>
 
@@ -274,55 +249,6 @@ export default function ServidorPage() {
               <div className="mt-4 pt-4 border-t border-slate-100">
                 <dt className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-1">Observações</dt>
                 <dd className="text-sm text-slate-700">{servidor.observacoes}</dd>
-              </div>
-            )}
-          </Card>
-
-          {/* Vantagens */}
-          <Card
-            titulo="✨ Vantagens Adquiridas"
-            subtitulo={`${vantagens.length} registro${vantagens.length !== 1 ? "s" : ""}`}
-            className="lg:col-span-2"
-          >
-            {vantagens.length === 0 ? (
-              <p className="text-slate-500 text-sm">Nenhuma vantagem registrada.</p>
-            ) : (
-              <div className="overflow-x-auto -mx-5 md:-mx-6">
-                <table className="w-full text-sm">
-                  <thead className="text-left text-xs uppercase tracking-wider text-slate-500 border-b border-slate-100">
-                    <tr>
-                      <th className="px-5 md:px-6 py-2">Vantagem</th>
-                      <th className="px-3 py-2">Valor</th>
-                      <th className="px-3 py-2">Início</th>
-                      <th className="px-3 py-2">Fundamento</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {vantagens.map((v) => (
-                      <tr key={v.id} className="hover:bg-slate-50">
-                        <td className="px-5 md:px-6 py-3">
-                          <div className="font-semibold text-slate-900">{v.tipoNome}</div>
-                          <div className="text-xs text-slate-500">{v.tipoCodigo}</div>
-                        </td>
-                        <td className="px-3 py-3 font-semibold text-sky-700">
-                          {v.tipoBaseCalculo === "percentual"
-                            ? `${formatarMoeda(v.percentual)}%`
-                            : v.valorFixo
-                            ? `R$ ${formatarMoeda(v.valorFixo)}`
-                            : "—"}
-                        </td>
-                        <td className="px-3 py-3 text-slate-600">{formatarData(v.dataInicio)}</td>
-                        <td className="px-3 py-3 text-slate-600 text-xs max-w-[200px]">{v.fundamentoLegal || "—"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-            {somaPercentual > 0 && (
-              <div className="mt-4 pt-4 border-t border-slate-100 flex justify-between text-sm">
-                <span className="text-slate-600">Total percentual acumulado</span>
-                <span className="font-bold text-slate-900">{formatarMoeda(somaPercentual)}%</span>
               </div>
             )}
           </Card>
