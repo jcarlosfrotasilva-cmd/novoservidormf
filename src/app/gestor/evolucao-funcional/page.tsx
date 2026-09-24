@@ -64,6 +64,7 @@ export default function EvolucaoFuncionalPage() {
   // Modal
   const [modalNova, setModalNova] = useState(false);
   const [salvando, setSalvando] = useState(false);
+  const [editandoId, setEditandoId] = useState<number | null>(null);
   const [form, setForm] = useState({
     nivelAnterior: "I",
     nivelPosterior: "II",
@@ -168,6 +169,7 @@ export default function EvolucaoFuncionalPage() {
   function abrirNova() {
     if (!servidorInfo || !regras) return;
     setErroForm("");
+    setEditandoId(null);
 
     // Pré-preenche com nível atual do servidor
     const nivelAtual = servidorInfo.nivel || "I";
@@ -180,6 +182,21 @@ export default function EvolucaoFuncionalPage() {
       dataVigencia: "",
       dataDoe: "",
       ehUltima: true,
+    });
+    setModalNova(true);
+  }
+
+  function abrirEditarEvolucao(ev: Evolucao) {
+    if (!servidorInfo || !regras) return;
+    setErroForm("");
+    setEditandoId(ev.id);
+
+    setForm({
+      nivelAnterior: ev.nivelAnterior,
+      nivelPosterior: ev.nivelPosterior,
+      dataVigencia: ev.dataVigencia,
+      dataDoe: ev.dataDoe || "",
+      ehUltima: ev.ehUltima,
     });
     setModalNova(true);
   }
@@ -227,8 +244,14 @@ export default function EvolucaoFuncionalPage() {
       };
       console.log('[salvarNova] Payload:', payload);
       
-      const res = await fetch("/api/evolucao-funcional", {
-        method: "POST",
+      const isEdit = editandoId !== null;
+      const url = isEdit 
+        ? `/api/evolucao-funcional?id=${editandoId}`
+        : "/api/evolucao-funcional";
+      const method = isEdit ? "PUT" : "POST";
+      
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
@@ -246,6 +269,7 @@ export default function EvolucaoFuncionalPage() {
       console.log('[salvarNova] Sucesso:', result);
       
       setModalNova(false);
+      setEditandoId(null);
       carregarEvolucoes(String(servidorInfo.id));
     } catch (err) {
       console.error('[salvarNova] Exceção:', err);
@@ -512,6 +536,13 @@ export default function EvolucaoFuncionalPage() {
                             )}
                           </div>
                           <div className="flex gap-1">
+                            <button
+                              onClick={() => abrirEditarEvolucao(ev)}
+                              title="Editar evolução"
+                              className="p-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 transition"
+                            >
+                              ✏️
+                            </button>
                             <button
                               onClick={() => alternarUltima(ev)}
                               title={ev.ehUltima ? "Desmarcar como última" : "Marcar como última"}

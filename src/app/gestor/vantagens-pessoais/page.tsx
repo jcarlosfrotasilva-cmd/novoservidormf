@@ -127,7 +127,10 @@ export default function VantagensPessoaisPage() {
     if (aba === "resumo") carregarResumo();
   }, [aba]);
 
+  const [editandoId, setEditandoId] = useState<number | null>(null);
+
   function abrirNovoAts() {
+    setEditandoId(null);
     setForm({
       numero: proximoNumero,
       dataVigencia: proximaVigenciaSugerida || "",
@@ -139,12 +142,30 @@ export default function VantagensPessoaisPage() {
     setModalAberto(true);
   }
 
+  function abrirEditarAts(ats: ATS) {
+    setEditandoId(ats.id);
+    setForm({
+      numero: ats.numero,
+      dataVigencia: ats.dataVigencia,
+      dataDoe: ats.dataDoe || "",
+      percentual: ats.percentual,
+      ehUltimo: ats.ehUltimo,
+      observacao: ats.observacao || "",
+    });
+    setModalAberto(true);
+  }
+
   async function salvarAts(e: FormEvent) {
     e.preventDefault();
     if (!servidorInfo) return;
 
-    const res = await fetch("/api/vantagens-pessoais", {
-      method: "POST",
+    const url = editandoId
+      ? `/api/vantagens-pessoais?id=${editandoId}`
+      : "/api/vantagens-pessoais";
+    const method = editandoId ? "PUT" : "POST";
+
+    const res = await fetch(url, {
+      method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         servidorId: servidorInfo.id,
@@ -161,6 +182,7 @@ export default function VantagensPessoaisPage() {
     }
 
     setModalAberto(false);
+    setEditandoId(null);
     carregarAts(String(servidorInfo.id));
   }
 
@@ -431,6 +453,12 @@ export default function VantagensPessoaisPage() {
                           )}
 
                           <div className="flex gap-2 pt-3 border-t border-slate-100">
+                            <button
+                              onClick={() => abrirEditarAts(ats)}
+                              className="flex-1 text-xs px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg font-medium transition"
+                            >
+                              ✏️ Editar
+                            </button>
                             <button
                               onClick={() => atualizarUltimo(ats.id, !ats.ehUltimo)}
                               className="flex-1 text-xs px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition"

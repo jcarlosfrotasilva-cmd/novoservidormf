@@ -66,6 +66,7 @@ export default function LicencaPremioPage() {
 
   // Modais
   const [modalCertidao, setModalCertidao] = useState(false);
+  const [certidaoEditando, setCertidaoEditando] = useState<Certidao | null>(null);
   const [formCertidao, setFormCertidao] = useState({
     numero: "",
     ano: new Date().getFullYear(),
@@ -76,6 +77,7 @@ export default function LicencaPremioPage() {
   });
 
   const [modalFruicao, setModalFruicao] = useState(false);
+  const [fruicaoEditando, setFruicaoEditando] = useState<Fruicao | null>(null);
   const [certidaoFruicao, setCertidaoFruicao] = useState<Certidao | null>(null);
   const [tipoFruicao, setTipoFruicao] = useState<"gozo" | "pecunia">("gozo");
   const [formFruicao, setFormFruicao] = useState({
@@ -145,12 +147,36 @@ export default function LicencaPremioPage() {
     setModalCertidao(true);
   }
 
+  async function excluirCertidao(id: number) {
+    if (!confirm("Excluir esta certidão? Todas as fruições vinculadas serão removidas.")) return;
+    await fetch(`/api/licenca-premio?id=${id}&tipo=certidao`, { method: "DELETE" });
+    if (servidorInfo) carregarCertidoes(String(servidorInfo.id));
+  }
+
+  function abrirEditarCertidao(certidao: Certidao) {
+    setCertidaoEditando(certidao);
+    setFormCertidao({
+      numero: String(certidao.numero),
+      ano: certidao.ano,
+      periodoInicial: certidao.periodoInicial,
+      periodoFinal: certidao.periodoFinal,
+      dataDoe: certidao.dataDoe || "",
+      observacao: certidao.observacao || "",
+    });
+    setModalCertidao(true);
+  }
+
   async function salvarCertidao(e: FormEvent) {
     e.preventDefault();
     if (!servidorInfo) return;
 
-    const res = await fetch("/api/licenca-premio?tipo=certidao", {
-      method: "POST",
+    const url = certidaoEditando
+      ? `/api/licenca-premio?id=${certidaoEditando.id}&tipo=certidao`
+      : "/api/licenca-premio?tipo=certidao";
+    const method = certidaoEditando ? "PUT" : "POST";
+
+    const res = await fetch(url, {
+      method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         servidorId: servidorInfo.id,
@@ -170,13 +196,8 @@ export default function LicencaPremioPage() {
     }
 
     setModalCertidao(false);
+    setCertidaoEditando(null);
     carregarCertidoes(String(servidorInfo.id));
-  }
-
-  async function excluirCertidao(id: number) {
-    if (!confirm("Excluir esta certidão? Todas as fruições vinculadas serão removidas.")) return;
-    await fetch(`/api/licenca-premio?id=${id}&tipo=certidao`, { method: "DELETE" });
-    if (servidorInfo) carregarCertidoes(String(servidorInfo.id));
   }
 
   function abrirFruicao(certidao: Certidao) {
@@ -197,11 +218,16 @@ export default function LicencaPremioPage() {
     e.preventDefault();
     if (!certidaoFruicao) return;
 
-    // Validação local: saldo zerado
-    if (certidaoFruicao.saldoAtual <= 0) {
+    // Validação local: saldo zerado (apenas para novas fruições)
+    if (!fruicaoEditando && certidaoFruicao.saldoAtual <= 0) {
       alert("Certidão zerada. Não é possível registrar fruição.");
       return;
     }
+
+    const url = fruicaoEditando
+      ? `/api/licenca-premio?id=${fruicaoEditando.id}&tipo=fruicao`
+      : "/api/licenca-premio?tipo=fruicao";
+    const method = fruicaoEditando ? "PUT" : "POST";
 
     const body: any = {
       certidaoId: certidaoFruicao.id,
@@ -218,8 +244,8 @@ export default function LicencaPremioPage() {
       body.anoPecunia = formFruicao.anoPecunia;
     }
 
-    const res = await fetch("/api/licenca-premio?tipo=fruicao", {
-      method: "POST",
+    const res = await fetch(url, {
+      method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
@@ -231,6 +257,7 @@ export default function LicencaPremioPage() {
     }
 
     setModalFruicao(false);
+    setFruicaoEditando(null);
     carregarCertidoes(String(servidorInfo!.id));
   }
 
@@ -238,6 +265,24 @@ export default function LicencaPremioPage() {
     if (!confirm("Excluir esta fruição? O saldo será recalculado.")) return;
     await fetch(`/api/licenca-premio?id=${id}&tipo=fruicao`, { method: "DELETE" });
     if (servidorInfo) carregarCertidoes(String(servidorInfo.id));
+  }
+
+  function abrirEditarFruicao(fruicao: Fruicao, certidaoId: number) {
+    const certidao = certidoes.find(c => c.id === certidaoId);
+    if (!certidao) return;
+    
+    setFruicaoEditando(fruicao);
+    setCertidaoFruicao(certidao);
+    setTipoFruicao(fruicao.tipo);
+    setFormFruicao({
+      dias: fruicao.dias,
+      dataInicio: fruicao.dataInicio || "",
+      dataFim: fruicao.dataFim || "",
+      dataDoeAutorizacao: fruicao.dataDoeAutorizacao || "",
+      anoPecunia: fruicao.anoPecunia || new Date().getFullYear(),
+      observacao: fruicao.observacao || "",
+    });
+    setModalFruicao(true);
   }
 
   if (!sessao) {
@@ -510,6 +555,16 @@ export default function LicencaPremioPage() {
                                         </div>
                                       </div>
                                       <button
+                                        onClick={() => abrirEditarFruicao(f, c.id)}
+                                        className="no-print opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-blue-50 hover:text-blue-700 text-slate-400 transition"
+                                        title="Editar fruição"
+                                      >
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+                                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                        </svg>
+                                      </button>
+                                      <button
                                         onClick={() => excluirFruicao(f.id)}
                                         className="no-print opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-rose-50 hover:text-rose-700 text-slate-400 transition"
                                         title="Excluir fruição"
@@ -532,6 +587,12 @@ export default function LicencaPremioPage() {
                                 className="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold text-sm transition disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed"
                               >
                                 + Registrar Fruição {zerada && "(zerada)"}
+                              </button>
+                              <button
+                                onClick={() => abrirEditarCertidao(c)}
+                                className="px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg font-semibold text-sm transition"
+                              >
+                                ✏️
                               </button>
                               <button
                                 onClick={() => excluirCertidao(c.id)}
