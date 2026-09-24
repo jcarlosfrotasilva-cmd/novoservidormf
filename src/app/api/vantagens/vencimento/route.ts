@@ -54,11 +54,14 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: "Servidor não associado" }, { status: 400 });
       }
       
-      // ATS do servidor
+      // ATS do servidor (apenas última concessão)
       const atsServidor = await db
         .select()
         .from(servidorAts)
-        .where(eq(servidorAts.servidorId, sessao.servidorId))
+        .where(and(
+          eq(servidorAts.servidorId, sessao.servidorId),
+          eq(servidorAts.ehUltimo, true)
+        ))
         .orderBy(asc(servidorAts.numero));
 
       resultado.ats = atsServidor.map(ats => {
@@ -106,16 +109,20 @@ export async function GET(req: NextRequest) {
       // Gestor: mostra de todos os servidores
       const servidorFiltro = servidorId ? eq(servidorAts.servidorId, parseInt(servidorId)) : undefined;
 
-      // ATS de todos os servidores
+      // ATS de todos os servidores (apenas última concessão)
       const todosAts = servidorId 
         ? await db
             .select()
             .from(servidorAts)
-            .where(servidorFiltro!)
+            .where(and(
+              servidorFiltro!,
+              eq(servidorAts.ehUltimo, true)
+            ))
             .orderBy(asc(servidorAts.numero))
         : await db
             .select()
             .from(servidorAts)
+            .where(eq(servidorAts.ehUltimo, true))
             .orderBy(asc(servidorAts.numero));
 
       resultado.ats = await Promise.all(todosAts.map(async (ats) => {
