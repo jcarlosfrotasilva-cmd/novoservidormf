@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { 
   servidorAts, 
   licencaPremioCertidoes, 
+  evolucaoFuncional,
   servidores,
   configVantagensPessoais
 } from "@/db/schema";
@@ -41,6 +42,7 @@ export async function GET(req: NextRequest) {
     let resultado: any = {
       ats: [],
       licencasPremio: [],
+      evolucoesFuncionais: [],
       resumo: {
         totalVencidas: 0,
         totalAVencer: 0,
@@ -104,6 +106,37 @@ export async function GET(req: NextRequest) {
           nomeVantagem: `Licença Prêmio ${lp.ano}`
         };
       });
+
+      // Evoluções Funcionais do servidor (apenas última)
+      const evolucoesServidor = await db
+        .select()
+        .from(evolucaoFuncional)
+        .where(and(
+          eq(evolucaoFuncional.servidorId, sessao.servidorId),
+          eq(evolucaoFuncional.ehUltima, true)
+        ))
+        .orderBy(asc(evolucaoFuncional.numero));
+
+      resultado.evolucoesFuncionais = evolucoesServidor.map(ev => {
+        const proximaData = ev.proximaData;
+        if (!proximaData) {
+          return null; // Não tem próxima data calculada
+        }
+        
+        const diasParaVencer = diasEntreDatas(hoje, proximaData);
+        const vencido = diasParaVencer < 0;
+        const diasVencido = vencido ? Math.abs(diasParaVencer) : 0;
+        
+        return {
+          ...ev,
+          diasParaVencer,
+          vencido,
+          diasVencido,
+          status: vencido ? 'vencido' : diasParaVencer <= 30 ? 'critico' : diasParaVencer <= diasAlerta ? 'alerta' : 'ok',
+          tipo: 'EVOLUCAO_FUNCIONAL',
+          nomeVantagem: `Evolução Funcional - ${ev.nivelAnterior} → ${ev.nivelPosterior}`
+        };
+      }).filter(ev => ev !== null); // Remove evoluções sem próxima data
 
     } else {
       // Gestor: mostra de todos os servidores
@@ -194,10 +227,59 @@ export async function GET(req: NextRequest) {
           servidor
         };
       }));
+
+      // Evoluções Funcionais de todos os servidores (apenas última)
+      const todasEvolucoes = servidorId
+        ? await db
+            .select()
+            .from(evolucaoFuncional)
+            .where(and(
+              eq(evolucaoFuncional.servidorId, parseInt(servidorId)),
+              eq(evolucaoFuncional.ehUltima, true)
+            ))
+            .orderBy(asc(evolucaoFuncional.numero))
+        : await db
+            .select()
+            .from(evolucaoFuncional)
+            .where(eq(evolucaoFuncional.ehUltima, true))
+            .orderBy(asc(evolucaoFuncional.numero));
+
+      resultado.evolucoesFuncionais = await Promise.all(todasEvolucoes.map(async (ev) => {
+        const proximaData = ev.proximaData;
+        if (!proximaData) {
+          return null; // Não tem próxima data calculada
+        }
+        
+        const diasParaVencer = diasEntreDatas(hoje, proximaData);
+        const vencido = diasParaVencer < 0;
+        const diasVencido = vencido ? Math.abs(diasParaVencer) : 0;
+        
+        // Busca dados do servidor
+        const [servidor] = await db
+          .select({
+            nomeCompleto: servidores.nomeCompleto,
+            matricula: servidores.matricula,
+            cargo: servidores.cargo,
+          })
+          .from(servidores)
+          .where(eq(servidores.id, ev.servidorId))
+          .limit(1);
+
+        return {
+          ...ev,
+          diasParaVencer,
+          vencido,
+          diasVencido,
+          status: vencido ? 'vencido' : diasParaVencer <= 30 ? 'critico' : diasParaVencer <= diasAlerta ? 'alerta' : 'ok',
+          tipo: 'EVOLUCAO_FUNCIONAL',
+          nomeVantagem: `Evolução Funcional - ${ev.nivelAnterior} → ${ev.nivelPosterior}`,
+          servidor
+        };
+      })).then(results => results.filter(ev => ev !== null)); // Remove evoluções sem próxima data
     }
 
     // Calcula resumo
-    const todasVantagens = [...resultado.ats, ...resultado.licencasPremio];
+    const todasVantagens = [...resultado.ats, ...resultado.licencasPremio, ...resultado.evolucoesFuncionais];
     resultado.resumo.totalVencidas = todasVantagens.filter(v => v.vencido).length;
     resultado.resumo.totalAVencer = todasVantagens.filter(v => !v.vencido && v.diasParaVencer <= diasAlerta).length;
     resultado.resumo.totalCritico = todasVantagens.filter(v => !v.vencido && v.diasParaVencer <= 30).length;
@@ -205,6 +287,7 @@ export async function GET(req: NextRequest) {
     // Ordena por urgência
     resultado.ats.sort((a: any, b: any) => a.diasParaVencer - b.diasParaVencer);
     resultado.licencasPremio.sort((a: any, b: any) => a.diasParaVencer - b.diasParaVencer);
+    resultado.evolucoesFuncionais.sort((a: any, b: any) => a.diasParaVencer - b.diasParaVencer);
 
     return NextResponse.json(resultado);
 

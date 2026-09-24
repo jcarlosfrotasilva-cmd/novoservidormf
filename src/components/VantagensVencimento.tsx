@@ -31,9 +31,9 @@ export function VantagensVencimento({ servidorId }: Props) {
       try {
         const res = await fetch(`/api/vantagens/vencimento?servidorId=${servidorId}&diasAlerta=90`);
         const data = await res.json();
-        const todas = [...data.ats, ...data.licencasPremio];
-        // Mostra apenas as que estão vencidas ou com alerta (90 dias)
-        const relevantes = todas.filter((v: Vantagem) => v.vencido || v.diasParaVencer <= 90);
+      const todas = [...data.ats, ...data.licencasPremio, ...data.evolucoesFuncionais];
+      // Mostra apenas as que estão vencidas ou com alerta (90 dias)
+      const relevantes = todas.filter((v: Vantagem) => v.vencido || v.diasParaVencer <= 90);
         setVantagens(relevantes);
       } catch (err) {
         console.error("Erro ao carregar vantagens:", err);
@@ -154,7 +154,7 @@ export function VantagensVencimento({ servidorId }: Props) {
                     {getStatusText(v.status, v.diasParaVencer, v.vencido)}
                   </span>
                   <span className="text-xs text-slate-500 bg-white px-2 py-1 rounded border border-slate-200">
-                    {v.tipo === 'ATS' ? 'ATS' : 'Licença Prêmio'}
+                    {v.tipo === 'ATS' ? 'ATS' : v.tipo === 'EVOLUCAO_FUNCIONAL' ? 'Evolução Funcional' : 'Licença Prêmio'}
                   </span>
                 </div>
                 <h4 className="text-base font-semibold text-slate-900 mb-1">{v.nomeVantagem}</h4>

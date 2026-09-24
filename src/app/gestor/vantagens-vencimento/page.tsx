@@ -28,6 +28,7 @@ type Vantagem = {
 type Resultado = {
   ats: Vantagem[];
   licencasPremio: Vantagem[];
+  evolucoesFuncionais: Vantagem[];
   resumo: {
     totalVencidas: number;
     totalAVencer: number;
@@ -121,7 +122,7 @@ export default function VantagensVencimentoPage() {
     );
   }
 
-  const todasVantagens = dados ? [...dados.ats, ...dados.licencasPremio] : [];
+  const todasVantagens = dados ? [...dados.ats, ...dados.licencasPremio, ...dados.evolucoesFuncionais] : [];
   const vantagensFiltradas = filtrarVantagens(todasVantagens);
 
   return (
@@ -228,7 +229,7 @@ export default function VantagensVencimentoPage() {
                         {getStatusText(v.status, v.diasParaVencer, v.vencido)}
                       </span>
                       <span className="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded">
-                        {v.tipo === 'ATS' ? 'ATS' : 'Licença Prêmio'}
+                        {v.tipo === 'ATS' ? 'ATS' : v.tipo === 'EVOLUCAO_FUNCIONAL' ? 'Evolução Funcional' : 'Licença Prêmio'}
                       </span>
                     </div>
                     <h3 className="text-lg font-semibold text-slate-900 mb-1">{v.nomeVantagem}</h3>
