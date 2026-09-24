@@ -361,6 +361,26 @@ export default function GestorPage() {
                   </div>
                 </div>
               </Link>
+              <Link
+                href="/gestor/vantagens-vencimento"
+                className="group relative overflow-hidden bg-white rounded-2xl p-6 border border-slate-200/60 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+              >
+                <div className="absolute top-0 right-0 w-32 h-32 bg-rose-50 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+                <div className="relative flex items-start justify-between">
+                  <div className="flex-1">
+                    <p className="text-xs uppercase tracking-wider text-slate-500 font-semibold mb-2">
+                      Monitoramento
+                    </p>
+                    <h3 className="text-xl font-bold text-slate-900 mb-2">Vantagens a Vencer</h3>
+                    <p className="text-sm text-slate-600 leading-relaxed">
+                      Acompanhe vencimentos em tempo real
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-100 to-rose-200 text-rose-700 flex items-center justify-center text-2xl group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
+                    ⏰
+                  </div>
+                </div>
+              </Link>
             </div>
 
             {/* Aniversariantes */}

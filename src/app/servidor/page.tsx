@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Header } from "@/components/Header";
 import { Card, Campo } from "@/components/Card";
+import { VantagensVencimento } from "@/components/VantagensVencimento";
 import { formatarData, formatarCPF, formatarMoeda, calcularTempoServico, situacaoCor } from "@/lib/format";
 
 type Servidor = {
@@ -214,6 +215,11 @@ export default function ServidorPage() {
           <StatCard label="Vantagens Ativas" valor={String(vantagensAtivas)} icone="✨" cor="emerald" />
           <StatCard label="Total em %" valor={`${formatarMoeda(somaPercentual)}%`} icone="📊" cor="indigo" />
           <StatCard label="Eventos" valor={String(historico.length)} icone="📅" cor="amber" />
+        </div>
+
+        {/* Alertas de Vantagens com Vencimento */}
+        <div className="no-print mb-6">
+          <VantagensVencimento servidorId={servidor.id} />
         </div>
 
         <div className="grid lg:grid-cols-3 gap-5">
