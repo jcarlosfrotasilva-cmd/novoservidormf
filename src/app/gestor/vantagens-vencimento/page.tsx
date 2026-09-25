@@ -41,7 +41,7 @@ export default function VantagensVencimentoPage() {
   const [sessao, setSessao] = useState<any>(null);
   const [dados, setDados] = useState<Resultado | null>(null);
   const [carregando, setCarregando] = useState(true);
-  const [filtroStatus, setFiltroStatus] = useState<'todos' | 'vencido' | 'critico' | 'alerta'>('todos');
+  const [aba, setAba] = useState<'ats' | 'evolucao' | 'licenca'>('ats');
   const [diasAlerta, setDiasAlerta] = useState(90);
 
   useEffect(() => {
@@ -74,44 +74,38 @@ export default function VantagensVencimentoPage() {
     }
   }
 
+  function ordenarVantagens(vantagens: Vantagem[]) {
+    return [...vantagens].sort((a, b) => {
+      if (a.vencido && !b.vencido) return -1;
+      if (!a.vencido && b.vencido) return 1;
+      if (a.vencido && b.vencido) return b.diasVencido - a.diasVencido;
+      return a.diasParaVencer - b.diasParaVencer;
+    });
+  }
+
   function getStatusColor(status: string) {
     switch (status) {
-      case 'vencido':
-        return 'bg-red-100 text-red-800 border-red-300';
-      case 'critico':
-        return 'bg-orange-100 text-orange-800 border-orange-300';
-      case 'alerta':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-300';
-      default:
-        return 'bg-green-100 text-green-800 border-green-300';
+      case 'vencido': return 'bg-red-100 text-red-800 border-red-300';
+      case 'critico': return 'bg-orange-100 text-orange-800 border-orange-300';
+      case 'alerta': return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+      default: return 'bg-green-100 text-green-800 border-green-300';
     }
   }
 
   function getStatusIcon(status: string) {
     switch (status) {
-      case 'vencido':
-        return '🔴';
-      case 'critico':
-        return '🟠';
-      case 'alerta':
-        return '🟡';
-      default:
-        return '🟢';
+      case 'vencido': return '🔴';
+      case 'critico': return '🟠';
+      case 'alerta': return '🟡';
+      default: return '🟢';
     }
   }
 
   function getStatusText(status: string, dias: number, vencido: boolean) {
-    if (vencido) {
-      return `Vencido há ${Math.abs(dias)} dias`;
-    }
+    if (vencido) return `Vencido há ${Math.abs(dias)} dias`;
     if (dias === 0) return 'Vence hoje';
     if (dias === 1) return 'Vence amanhã';
     return `Vence em ${dias} dias`;
-  }
-
-  function filtrarVantagens(vantagens: Vantagem[]) {
-    if (filtroStatus === 'todos') return vantagens;
-    return vantagens.filter(v => v.status === filtroStatus);
   }
 
   if (!sessao) {
@@ -122,8 +116,13 @@ export default function VantagensVencimentoPage() {
     );
   }
 
-  const todasVantagens = dados ? [...dados.ats, ...dados.licencasPremio, ...dados.evolucoesFuncionais] : [];
-  const vantagensFiltradas = filtrarVantagens(todasVantagens);
+  const vantagensAtuais = aba === 'ats' 
+    ? dados?.ats || []
+    : aba === 'evolucao'
+    ? dados?.evolucoesFuncionais || []
+    : dados?.licencasPremio || [];
+
+  const vantagensOrdenadas = ordenarVantagens(vantagensAtuais);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -139,26 +138,33 @@ export default function VantagensVencimentoPage() {
           </p>
         </div>
 
-        {/* Controles */}
         <div className="card-modern p-4 mb-6">
           <div className="flex flex-wrap gap-4 items-center justify-between">
             <div className="flex gap-2">
-              {(['todos', 'vencido', 'critico', 'alerta'] as const).map((status) => (
-                <button
-                  key={status}
-                  onClick={() => setFiltroStatus(status)}
-                  className={`px-4 py-2 rounded-xl font-semibold text-sm transition ${
-                    filtroStatus === status
-                      ? 'bg-indigo-600 text-white shadow-sm'
-                      : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50'
-                  }`}
-                >
-                  {status === 'todos' && 'Todos'}
-                  {status === 'vencido' && '🔴 Vencidos'}
-                  {status === 'critico' && '🟠 Críticos (≤30 dias)'}
-                  {status === 'alerta' && `🟡 Alerta (≤${diasAlerta} dias)`}
-                </button>
-              ))}
+              <button
+                onClick={() => setAba('ats')}
+                className={`px-4 py-2 rounded-xl font-semibold text-sm transition ${
+                  aba === 'ats' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50'
+                }`}
+              >
+                🧮 ATS
+              </button>
+              <button
+                onClick={() => setAba('evolucao')}
+                className={`px-4 py-2 rounded-xl font-semibold text-sm transition ${
+                  aba === 'evolucao' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50'
+                }`}
+              >
+                📈 Evolução Funcional
+              </button>
+              <button
+                onClick={() => setAba('licenca')}
+                className={`px-4 py-2 rounded-xl font-semibold text-sm transition ${
+                  aba === 'licenca' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50'
+                }`}
+              >
+                🏖️ Licença Prêmio
+              </button>
             </div>
             <div className="flex items-center gap-2">
               <label className="text-sm text-slate-600">Alerta até:</label>
@@ -177,112 +183,99 @@ export default function VantagensVencimentoPage() {
           </div>
         </div>
 
-        {/* Cards de resumo */}
         {dados && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div className="card-modern p-5">
               <p className="text-sm text-slate-600 mb-1">Total de Vantagens</p>
-              <p className="text-3xl font-bold text-slate-900">{todasVantagens.length}</p>
+              <p className="text-3xl font-bold text-slate-900">{vantagensAtuais.length}</p>
             </div>
             <div className="card-modern p-5 bg-red-50 border-red-200">
               <p className="text-sm text-red-700 mb-1">🔴 Vencidas</p>
-              <p className="text-3xl font-bold text-red-900">{dados.resumo.totalVencidas}</p>
+              <p className="text-3xl font-bold text-red-900">
+                {vantagensOrdenadas.filter(v => v.vencido).length}
+              </p>
             </div>
             <div className="card-modern p-5 bg-orange-50 border-orange-200">
               <p className="text-sm text-orange-700 mb-1">🟠 Críticas (≤30 dias)</p>
-              <p className="text-3xl font-bold text-orange-900">{dados.resumo.totalCritico}</p>
+              <p className="text-3xl font-bold text-orange-900">
+                {vantagensOrdenadas.filter(v => !v.vencido && v.diasParaVencer <= 30).length}
+              </p>
             </div>
             <div className="card-modern p-5 bg-yellow-50 border-yellow-200">
               <p className="text-sm text-yellow-700 mb-1">🟡 A Vencer (≤{diasAlerta} dias)</p>
-              <p className="text-3xl font-bold text-yellow-900">{dados.resumo.totalAVencer}</p>
+              <p className="text-3xl font-bold text-yellow-900">
+                {vantagensOrdenadas.filter(v => !v.vencido && v.diasParaVencer <= diasAlerta).length}
+              </p>
             </div>
           </div>
         )}
 
-        {/* Lista de vantagens */}
         {carregando ? (
           <div className="card-modern p-12 text-center">
             <div className="w-12 h-12 mx-auto border-4 border-sky-600 border-t-transparent rounded-full animate-spin mb-4"></div>
             <p className="text-slate-600">Carregando dados...</p>
           </div>
-        ) : vantagensFiltradas.length === 0 ? (
+        ) : vantagensOrdenadas.length === 0 ? (
           <div className="card-modern p-12 text-center">
             <div className="w-16 h-16 mx-auto rounded-full bg-green-100 flex items-center justify-center text-4xl mb-4">
               ✅
             </div>
             <h3 className="text-lg font-semibold text-slate-900 mb-2">Tudo em dia!</h3>
             <p className="text-slate-600">
-              {filtroStatus === 'todos' 
-                ? 'Nenhuma vantagem com vencimento próximo'
-                : `Nenhuma vantagem com status "${filtroStatus}"`}
+              Nenhuma vantagem com vencimento próximo nesta categoria
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {vantagensFiltradas.map((v) => (
-              <div key={`${v.tipo}-${v.id}`} className="card-modern p-5 hover:shadow-md transition">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(v.status)}`}>
-                        {getStatusIcon(v.status)}
-                        {getStatusText(v.status, v.diasParaVencer, v.vencido)}
-                      </span>
-                      <span className="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded">
-                        {v.tipo === 'ATS' ? 'ATS' : v.tipo === 'EVOLUCAO_FUNCIONAL' ? 'Evolução Funcional' : 'Licença Prêmio'}
-                      </span>
-                    </div>
-                    <h3 className="text-lg font-semibold text-slate-900 mb-1">{v.nomeVantagem}</h3>
-                    {v.servidor && (
-                      <div className="flex items-center gap-2 text-sm text-slate-600 mb-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                          <circle cx="12" cy="7" r="4" />
-                        </svg>
-                        <span className="font-medium">{v.servidor.nomeCompleto}</span>
-                        <span>·</span>
-                        <span>{v.servidor.matricula}</span>
-                        <span>·</span>
-                        <span>{v.servidor.cargo}</span>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-4 text-sm text-slate-600 mt-3">
-                      {v.dataVigencia && (
-                        <div>
-                          <span className="font-semibold">Vigência:</span> {formatarData(v.dataVigencia)}
-                        </div>
-                      )}
-                      {v.proximaVigencia && (
-                        <div>
-                          <span className="font-semibold">Próxima:</span> {formatarData(v.proximaVigencia)}
-                        </div>
-                      )}
-                      {v.periodoFinal && (
-                        <div>
-                          <span className="font-semibold">Período Final:</span> {formatarData(v.periodoFinal)}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className={`text-3xl font-bold ${v.vencido ? 'text-red-600' : v.diasParaVencer <= 30 ? 'text-orange-600' : 'text-slate-600'}`}>
-                      {v.vencido ? Math.abs(v.diasParaVencer) : v.diasParaVencer}
-                    </div>
-                    <div className="text-xs text-slate-500">
-                      {v.vencido ? 'dias atrás' : 'dias'}
-                    </div>
-                  </div>
-                </div>
-                {v.vencido && (
-                  <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-sm text-red-800">
-                      ⚠️ <strong>Atenção:</strong> Esta vantagem está vencida há {Math.abs(v.diasParaVencer)} dias. 
-                      Entre em contato com o servidor para regularização.
-                    </p>
-                  </div>
-                )}
-              </div>
-            ))}
+          <div className="card-modern overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 border-b border-slate-200">
+                  <tr>
+                    <th className="text-left px-4 py-3 font-semibold text-slate-700">Servidor</th>
+                    <th className="text-left px-4 py-3 font-semibold text-slate-700">Vantagem</th>
+                    <th className="text-left px-4 py-3 font-semibold text-slate-700">Vigência</th>
+                    <th className="text-left px-4 py-3 font-semibold text-slate-700">Status</th>
+                    <th className="text-left px-4 py-3 font-semibold text-slate-700">Dias</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {vantagensOrdenadas.map((v) => (
+                    <tr key={`${v.tipo}-${v.id}`} className="hover:bg-slate-50 transition">
+                      <td className="px-4 py-3">
+                        <div className="font-medium text-slate-900">{v.servidor?.nomeCompleto}</div>
+                        <div className="text-xs text-slate-500">{v.servidor?.matricula} · {v.servidor?.cargo}</div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="font-medium text-slate-900">{v.nomeVantagem}</div>
+                        <div className="text-xs text-slate-500">{v.tipo}</div>
+                      </td>
+                      <td className="px-4 py-3 text-slate-700">
+                        {v.dataVigencia ? formatarData(v.dataVigencia) : 
+                         v.proximaVigencia ? formatarData(v.proximaVigencia) :
+                         v.periodoFinal ? formatarData(v.periodoFinal) : '—'}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold border ${getStatusColor(v.status)}`}>
+                          {getStatusIcon(v.status)}
+                          {getStatusText(v.status, v.diasParaVencer, v.vencido)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        {v.vencido ? (
+                          <span className="font-semibold text-red-700">
+                            {Math.abs(v.diasParaVencer)} dias
+                          </span>
+                        ) : (
+                          <span className="font-semibold text-slate-700">
+                            {v.diasParaVencer} dias
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </main>
