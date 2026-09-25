@@ -135,6 +135,8 @@ export const licencaPremioCertidoes = pgTable("licenca_premio_certidoes", {
   periodoFinal: date("periodo_final").notNull(), // fim do período aquisitivo
   dataDoe: date("data_doe"), // publicação no DOE
   saldoInicial: integer("saldo_inicial").notNull().default(90), // sempre 90 dias
+  ehUltima: boolean("eh_ultima").notNull().default(false), // marca se é a última certidão
+  proximoPeriodoInicial: date("proximo_periodo_inicial"), // calculado: periodoFinal + 1 dia + 1825 dias
   observacao: text("observacao"),
   criadoEm: timestamp("criado_em").notNull().defaultNow(),
 });

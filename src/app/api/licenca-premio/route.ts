@@ -212,6 +212,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Calcula próximo período aquisitivo se ehUltima = true
+    let proximoPeriodoInicial = null;
+    if (body.ehUltima === true && periodoFinal) {
+      const periodoFinalDate = new Date(periodoFinal);
+      // Próximo período inicia 1 dia após o período final + 1825 dias (5 anos)
+      periodoFinalDate.setDate(periodoFinalDate.getDate() + 1 + 1825);
+      proximoPeriodoInicial = periodoFinalDate.toISOString().split('T')[0];
+    }
+
     const [criada] = await db
       .insert(licencaPremioCertidoes)
       .values({
@@ -222,6 +231,8 @@ export async function POST(req: NextRequest) {
         periodoFinal,
         dataDoe: dataDoe || null,
         saldoInicial: SALDO_INICIAL,
+        ehUltima: body.ehUltima || false,
+        proximoPeriodoInicial,
         observacao: observacao || null,
       })
       .returning();
@@ -321,6 +332,178 @@ export async function POST(req: NextRequest) {
       { ...criada, saldoAtual: novoSaldo },
       { status: 201 }
     );
+  }
+
+  return NextResponse.json({ error: "Tipo inválido" }, { status: 400 });
+}
+
+// ============================================================
+// PUT - Editar certidão ou fruição
+// ============================================================
+export async function PUT(req: NextRequest) {
+  const sessao = await obterSessao();
+  if (!sessao || sessao.papel !== "gestor") {
+    return NextResponse.json({ error: "Apenas gestores" }, { status: 403 });
+  }
+
+  const url = new URL(req.url);
+  const tipo = url.searchParams.get("tipo");
+  const body = await req.json();
+
+  // === Editar Certidão ===
+  if (tipo === "certidao") {
+    const { id, numero, ano, periodoInicial, periodoFinal, dataDoe, observacao, ehUltima } = body;
+
+    if (!id) {
+      return NextResponse.json({ error: "ID da certidão é obrigatório" }, { status: 400 });
+    }
+
+    // Verifica se certidão existe
+    const [certidao] = await db
+      .select()
+      .from(licencaPremioCertidoes)
+      .where(eq(licencaPremioCertidoes.id, Number(id)))
+      .limit(1);
+
+    if (!certidao) {
+      return NextResponse.json({ error: "Certidão não encontrada" }, { status: 404 });
+    }
+
+    // Verifica duplicata (mesmo número + ano) - exceto a própria certidão
+    if (numero && ano) {
+      const [duplicada] = await db
+        .select()
+        .from(licencaPremioCertidoes)
+        .where(
+          and(
+            eq(licencaPremioCertidoes.servidorId, certidao.servidorId),
+            eq(licencaPremioCertidoes.numero, Number(numero)),
+            eq(licencaPremioCertidoes.ano, Number(ano))
+          )
+        )
+        .limit(1);
+
+      if (duplicada && duplicada.id !== Number(id)) {
+        return NextResponse.json(
+          { error: `Já existe a certidão nº ${numero}/${ano} para este servidor.` },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Calcula próximo período aquisitivo se ehUltima = true
+    let proximoPeriodoInicial = null;
+    if (ehUltima === true && periodoFinal) {
+      const periodoFinalDate = new Date(periodoFinal);
+      periodoFinalDate.setDate(periodoFinalDate.getDate() + 1 + 1825);
+      proximoPeriodoInicial = periodoFinalDate.toISOString().split('T')[0];
+    }
+
+    const [atualizada] = await db
+      .update(licencaPremioCertidoes)
+      .set({
+        numero: numero ? Number(numero) : certidao.numero,
+        ano: ano ? Number(ano) : certidao.ano,
+        periodoInicial: periodoInicial || certidao.periodoInicial,
+        periodoFinal: periodoFinal || certidao.periodoFinal,
+        dataDoe: dataDoe !== undefined ? (dataDoe || null) : certidao.dataDoe,
+        ehUltima: ehUltima !== undefined ? ehUltima : certidao.ehUltima,
+        proximoPeriodoInicial,
+        observacao: observacao !== undefined ? (observacao || null) : certidao.observacao,
+      })
+      .where(eq(licencaPremioCertidoes.id, Number(id)))
+      .returning();
+
+    const saldoAtual = await calcularSaldo(Number(id));
+
+    return NextResponse.json({ ...atualizada, saldoAtual });
+  }
+
+  // === Editar Fruição ===
+  if (tipo === "fruicao") {
+    const {
+      id,
+      tipoFruicao,
+      dias,
+      dataInicio,
+      dataFim,
+      dataDoeAutorizacao,
+      anoPecunia,
+      observacao,
+    } = body;
+
+    if (!id) {
+      return NextResponse.json({ error: "ID da fruição é obrigatório" }, { status: 400 });
+    }
+
+    // Verifica se fruição existe
+    const [fruicao] = await db
+      .select()
+      .from(licencaPremioFruicoes)
+      .where(eq(licencaPremioFruicoes.id, Number(id)))
+      .limit(1);
+
+    if (!fruicao) {
+      return NextResponse.json({ error: "Fruição não encontrada" }, { status: 404 });
+    }
+
+    // Valida dias se foi alterado
+    const novosDias = dias !== undefined ? Number(dias) : fruicao.dias;
+    if (!DIAS_VALIDOS.includes(novosDias)) {
+      return NextResponse.json(
+        { error: `Dias deve ser um dos valores: ${DIAS_VALIDOS.join(", ")}` },
+        { status: 400 }
+      );
+    }
+
+    // Verifica saldo (excluindo a própria fruição)
+    const saldoAtual = await calcularSaldo(fruicao.certidaoId);
+    const saldoDisponivel = saldoAtual + fruicao.dias; // Adiciona de volta os dias da fruição atual
+
+    if (novosDias > saldoDisponivel) {
+      return NextResponse.json(
+        { error: `Saldo insuficiente. Disponível: ${saldoDisponivel} dias, solicitado: ${novosDias} dias.` },
+        { status: 400 }
+      );
+    }
+
+    // Validações por tipo
+    const novoTipo = tipoFruicao || fruicao.tipo;
+    if (novoTipo === "gozo") {
+      if (!dataInicio || !dataFim) {
+        return NextResponse.json(
+          { error: "Para GOZO são obrigatórios: dataInicio, dataFim" },
+          { status: 400 }
+        );
+      }
+    } else if (novoTipo === "pecunia") {
+      if (!anoPecunia) {
+        return NextResponse.json(
+          { error: "Para PECÚNIA é obrigatório informar o anoPecunia" },
+          { status: 400 }
+        );
+      }
+    } else {
+      return NextResponse.json({ error: "Tipo de fruição inválido (gozo ou pecunia)" }, { status: 400 });
+    }
+
+    const [atualizada] = await db
+      .update(licencaPremioFruicoes)
+      .set({
+        tipo: novoTipo,
+        dias: novosDias,
+        dataInicio: novoTipo === "gozo" ? (dataInicio || fruicao.dataInicio) : null,
+        dataFim: novoTipo === "gozo" ? (dataFim || fruicao.dataFim) : null,
+        dataDoeAutorizacao: novoTipo === "gozo" ? (dataDoeAutorizacao || fruicao.dataDoeAutorizacao) : null,
+        anoPecunia: novoTipo === "pecunia" ? (anoPecunia ? Number(anoPecunia) : null) : null,
+        observacao: observacao !== undefined ? (observacao || null) : fruicao.observacao,
+      })
+      .where(eq(licencaPremioFruicoes.id, Number(id)))
+      .returning();
+
+    const novoSaldo = await calcularSaldo(fruicao.certidaoId);
+
+    return NextResponse.json({ ...atualizada, saldoAtual: novoSaldo });
   }
 
   return NextResponse.json({ error: "Tipo inválido" }, { status: 400 });
